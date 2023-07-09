@@ -1,0 +1,16 @@
+{
+  "lockfile_version": "1",
+  "packages": {
+    "poetry@1.4.2": {
+      "last_modified": "2023-05-25T03:54:59Z",
+      "resolved": "github:NixOS/nixpkgs/8d4d822bc0efa9de6eddc79cb0d82897a9baa750#poetry",
+      "version": "1.4.2"
+    },
+    "python@3.10": {
+      "last_modified": "2022-05-01T01:43:46Z",
+      "plugin_version": "0.0.1",
+      "resolved": "github:NixOS/nixpkgs/b283b64580d1872333a99af2b4cef91bb84580cf#python310",
+      "version": "3.10.4"
+    }
+  }
+}
