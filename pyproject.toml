@@ -11,6 +11,13 @@ license = "MIT"
 python = "^3.10"
 python-dotenv = "^1.0.0"
 django = "^4.2.3"
+django-stubs = {extras = ["compatible-mypy"], version = "^4.2.3"}
+psutil = "^5.9.5"
+pydriller = "^2.5"
+python-gitlab = "^3.15.0"
+pygithub = "^1.59.0"
+storage = "^0.0.4.3"
+google-cloud-storage = "^2.10.0"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]
@@ -34,6 +41,8 @@ types-toml = "^0.10.3"
 isort = "^5.12.0"
 pre-commit = "^3.3.3"
 pytest-django = "^4.5.2"
+types-google-cloud-ndb = "^2.1.0.7"
+types-psutil = "^5.9.5.15"
 
 [tool.black]
 line-length = 120
@@ -43,10 +52,42 @@ profile = "black"
 
 [tool.pytest.ini_options]
 minversion = "6.0"
+addopts = "--reuse-db"
+DJANGO_SETTINGS_MODULE = "crawler.settings"
 testpaths = [
-    "tests",
+    "Indexer/tests",
 ]
 
 [tool.coverage.run]
 source = ["."]
-omit = ["tests/*"]
+omit = ["**/tests/*", "crawler/*.py", "manage.py"]
+
+[tool.mypy]
+plugins = ["mypy_django_plugin.main"]
+warn_return_any = false
+warn_unused_configs = true
+no_implicit_optional = true
+warn_redundant_casts = true
+warn_unused_ignores = true
+show_column_numbers = true
+show_error_codes = true
+show_error_context = true
+mypy_path = "."
+
+[mypy.plugins.django-stubs]
+django_settings_module = "crawler.settings"
+
+[tool.mypy-dataclasses]
+ignore_missing_imports = true
+
+[tool.mypy-pydriller]
+ignore_missing_imports = true
+
+[tool.mypy-pydriller.git]
+ignore_missing_imports = true
+
+[tool.mypy-pydriller.domain.commit]
+ignore_missing_imports = true
+
+[tool.django-stubs]
+django_settings_module = "crawler.settings"

@@ -7,6 +7,7 @@
         ".venv/**/*.py"
     ],
     "python.testing.pytestEnabled": true,
+    "python.analysis.enablePytestSupport": true,
     "python.envFile": "${workspaceFolder}/.env",
     "[python]": {
         "editor.formatOnSave": true,

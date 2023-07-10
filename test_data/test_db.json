@@ -1,0 +1,223 @@
+[
+    {
+        "model": "indexer.author",
+        "pk": 1,
+        "fields": {
+            "name": "me",
+            "email": "mini@me",
+            "real_name": "me",
+            "real_email": "mini@me",
+            "company": null,
+            "team": null,
+            "author_group": null
+        }
+    },
+    {
+        "model": "indexer.repository",
+        "pk": 1,
+        "fields": {
+            "repo_type": "github",
+            "repo_name": "repo",
+            "repo_group": null,
+            "component": null,
+            "clone_url": "git@github.com:super/repo.git",
+            "browse_url": "https://github.com/super/repo",
+            "is_active": true,
+            "last_indexed_at": null,
+            "last_commit_at": null
+        }
+    },
+    {
+        "model": "indexer.repository",
+        "pk": 2,
+        "fields": {
+            "repo_type": "gitlab",
+            "repo_name": "repo",
+            "repo_group": null,
+            "component": null,
+            "clone_url": "https://gitlab.com/dummy/repo.git",
+            "browse_url": "https://gitlab.com/dummy/repo",
+            "is_active": true,
+            "last_indexed_at": null,
+            "last_commit_at": null
+        }
+    },
+    {
+        "model": "indexer.commit",
+        "pk": "e2c8b79813b95c93e5b06c5a82e4c417d5020762",
+        "fields": {
+            "branches": "",
+            "message": "",
+            "created_at": "2023-07-10T07:09:24.763449",
+            "is_merge": false,
+            "n_lines": 0,
+            "n_files": 0,
+            "n_insertions": 0,
+            "n_deletions": 0,
+            "dmm_unit_size": 0.0,
+            "dmm_unit_complexity": 0.0,
+            "dmm_unit_interfacing": 0.0,
+            "n_lines_changed": 0,
+            "n_lines_ignored": 0,
+            "n_files_changed": 0,
+            "n_files_ignored": 0,
+            "author": 1
+        }
+    },
+    {
+        "model": "indexer.commit",
+        "pk": "ee474544052762d314756bb7439d6dab73221d3d",
+        "fields": {
+            "branches": "",
+            "message": "",
+            "created_at": "2023-07-10T07:09:24.763449",
+            "is_merge": false,
+            "n_lines": 0,
+            "n_files": 0,
+            "n_insertions": 0,
+            "n_deletions": 0,
+            "dmm_unit_size": 0.0,
+            "dmm_unit_complexity": 0.0,
+            "dmm_unit_interfacing": 0.0,
+            "n_lines_changed": 0,
+            "n_lines_ignored": 0,
+            "n_files_changed": 0,
+            "n_files_ignored": 0,
+            "author": 1
+        }
+    },
+    {
+        "model": "indexer.commit",
+        "pk": "feb3a2837630c0e51447fc1d7e68d86f964a8440",
+        "fields": {
+            "branches": "",
+            "message": "",
+            "created_at": "2023-07-10T07:09:24.763449",
+            "is_merge": false,
+            "n_lines": 0,
+            "n_files": 0,
+            "n_insertions": 0,
+            "n_deletions": 0,
+            "dmm_unit_size": 0.0,
+            "dmm_unit_complexity": 0.0,
+            "dmm_unit_interfacing": 0.0,
+            "n_lines_changed": 0,
+            "n_lines_ignored": 0,
+            "n_files_changed": 0,
+            "n_files_ignored": 0,
+            "author": 1
+        }
+    },
+    {
+        "model": "indexer.committedfile",
+        "pk": 1,
+        "fields": {
+            "commit_sha": "",
+            "change_type": "ADD",
+            "file_path": "README.md",
+            "file_name": "README.md",
+            "file_type": "md",
+            "n_lines_added": 0,
+            "n_lines_deleted": 0,
+            "n_lines_changed": 0,
+            "n_lines_of_code": 0,
+            "n_methods": 0,
+            "n_methods_changed": 0,
+            "is_on_exclude_list": false,
+            "is_superfluous": false,
+            "commit": "feb3a2837630c0e51447fc1d7e68d86f964a8440"
+        }
+    },
+    {
+        "model": "indexer.committedfile",
+        "pk": 2,
+        "fields": {
+            "commit_sha": "",
+            "change_type": "UPDATE",
+            "file_path": "package.json",
+            "file_name": "package.json",
+            "file_type": "json",
+            "n_lines_added": 0,
+            "n_lines_deleted": 0,
+            "n_lines_changed": 0,
+            "n_lines_of_code": 0,
+            "n_methods": 0,
+            "n_methods_changed": 0,
+            "is_on_exclude_list": false,
+            "is_superfluous": false,
+            "commit": "feb3a2837630c0e51447fc1d7e68d86f964a8440"
+        }
+    },
+    {
+        "model": "indexer.committedfile",
+        "pk": 3,
+        "fields": {
+            "commit_sha": "",
+            "change_type": "DELETE",
+            "file_path": "/src/main/java/com/company/MainApplication.java",
+            "file_name": "MainApplication.java",
+            "file_type": "java",
+            "n_lines_added": 0,
+            "n_lines_deleted": 0,
+            "n_lines_changed": 0,
+            "n_lines_of_code": 0,
+            "n_methods": 0,
+            "n_methods_changed": 0,
+            "is_on_exclude_list": false,
+            "is_superfluous": false,
+            "commit": "ee474544052762d314756bb7439d6dab73221d3d"
+        }
+    },
+    {
+        "model": "indexer.committedfile",
+        "pk": 4,
+        "fields": {
+            "commit_sha": "",
+            "change_type": "UPDATE",
+            "file_path": "app/App.js",
+            "file_name": "App.js",
+            "file_type": "js",
+            "n_lines_added": 0,
+            "n_lines_deleted": 0,
+            "n_lines_changed": 0,
+            "n_lines_of_code": 0,
+            "n_methods": 0,
+            "n_methods_changed": 0,
+            "is_on_exclude_list": false,
+            "is_superfluous": false,
+            "commit": "feb3a2837630c0e51447fc1d7e68d86f964a8440"
+        }
+    },
+    {
+        "model": "indexer.repositorycommitlink",
+        "pk": 1,
+        "fields": {
+            "commit": "ee474544052762d314756bb7439d6dab73221d3d",
+            "repo": 1
+        }
+    },
+    {
+        "model": "indexer.repositorycommitlink",
+        "pk": 2,
+        "fields": {
+            "commit": "feb3a2837630c0e51447fc1d7e68d86f964a8440",
+            "repo": 1
+        }
+    },
+    {
+        "model": "indexer.repositorycommitlink",
+        "pk": 3,
+        "fields": {
+            "commit": "e2c8b79813b95c93e5b06c5a82e4c417d5020762",
+            "repo": 2
+        }
+    },
+    {
+        "model": "indexer.repositorycommitlink",
+        "pk": 4,
+        "fields": {
+            "commit": "feb3a2837630c0e51447fc1d7e68d86f964a8440",
+            "repo": 2
+        }
+    }
+]
