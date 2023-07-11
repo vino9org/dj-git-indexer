@@ -25,6 +25,9 @@ def index_repository(clone_url: str, git_repo_type: str = "", show_progress: boo
         start_t = datetime.now()
 
         repo, _ = Repository.objects.get_or_create(clone_url=clone_url, repo_type=git_repo_type)
+        if repo.is_active is False:
+            log(f"### skipping inactive repository {display_url(clone_url)}")
+            return 0
 
         # use list comprehension to force loading of commits
         old_commits = {}
