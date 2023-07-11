@@ -1,6 +1,5 @@
 import os
 import shlex
-from io import StringIO
 
 import pytest
 from django.core.management import call_command
@@ -8,26 +7,26 @@ from django.core.management import call_command
 from indexer.management.commands.index import enumberate_from_file
 
 
-def invoke_command(cmdline: str) -> str:
+def invoke_command(cmdline: str) -> None:
     argv = shlex.split(cmdline)
-    stdout = StringIO()
     # for now this does not work, need rewrite in commands
-    call_command(argv[0], argv[1:], stdout=stdout)
-    return stdout.getvalue()
+    call_command(argv[0], argv[1:])
 
 
 @pytest.mark.skipif(os.environ.get("GITHUB_TOKEN") is not None, reason="does not work in Github action, no ssh key")
-def test_run_mirror(db, tmp_path, github_test_repo):
+def test_run_mirror(db, tmp_path, github_test_repo, capfd):
     cmdline = (
         f"mirror --query {github_test_repo} --source github --filter * --output {tmp_path.as_posix()}/ --overwrite"
     )
 
     # 1st run should trigger a git clone
     invoke_command(cmdline)
-    # assert "git clone --mirror" in out1
+    captured = capfd.readouterr()
+    assert "git clone --mirror" in captured.out
 
     invoke_command(cmdline)
-    # assert "git fetch --prune" in out2
+    captured = capfd.readouterr()
+    assert "git fetch --prune" in captured.out
 
 
 @pytest.mark.skipif(os.environ.get("GITHUB_TOKEN") is not None, reason="does not work in Github action, no ssh key")

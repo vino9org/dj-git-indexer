@@ -18,7 +18,7 @@ load_dotenv()
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = os.getenv("DJANGO_SECRET")
-DEBUG = os.getenv("DEBUG_MODE", "") == "1"
+DEBUG = os.getenv("DEBUG_MODE", "") != "0"
 ALLOWED_HOSTS = [os.getenv("DJANGO_HOST", "*"), "127.0.0.1", "[::1]"]
 
 
@@ -30,17 +30,18 @@ INSTALLED_APPS = [
     # "django.contrib.auth",
     # "django.contrib.contenttypes",
     # "django.contrib.sessions",
-    # "django.contrib.messages",
+    "django.contrib.messages",
     "django.contrib.staticfiles",
+    "bootstrap5",
 ]
 
 MIDDLEWARE = [
     # "django.middleware.security.SecurityMiddleware",
-    # "django.contrib.sessions.middleware.SessionMiddleware",
+    "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
     # "django.middleware.csrf.CsrfViewMiddleware",
     # "django.contrib.auth.middleware.AuthenticationMiddleware",
-    # "django.contrib.messages.middleware.MessageMiddleware",
+    "django.contrib.messages.middleware.MessageMiddleware",
     # "django.middleware.clickjacking.XFrameOptionsMiddleware",
 ]
 
@@ -49,7 +50,7 @@ ROOT_URLCONF = "crawler.urls"
 TEMPLATES = [
     {
         "BACKEND": "django.template.backends.django.DjangoTemplates",
-        "DIRS": [],
+        "DIRS": ["templates"],
         "APP_DIRS": True,
         "OPTIONS": {
             "context_processors": [

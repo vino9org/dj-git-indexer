@@ -1,0 +1,16 @@
+{% extends 'indexer/base.html' %}
+
+{% load bootstrap5 %}
+
+{% block title %}
+    Search for Commits
+{% endblock %}
+
+{% block content %}
+
+    <form role="form" autocomplete="off" method="post">
+        {% bootstrap_form form %}
+        {% buttons submit='Search' %}{% endbuttons %}
+    </form>
+
+{% endblock %}

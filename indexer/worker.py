@@ -70,7 +70,8 @@ def index_repository(clone_url: str, git_repo_type: str = "", show_progress: boo
     except GitCommandError as e:
         print(f"{e._cmdline} returned {e.stderr} for {clone_url}")
     except DatabaseError as e:
-        print(f"{e.statement} returned {e._message}")
+        exc = traceback.format_exc()
+        print(f"DatabaseError indexing repository {clone_url} => {str(e)}\n{exc}")
     except Exception as e:  # pragma: no cover
         exc = traceback.format_exc()
         print(f"Exception indexing repository {clone_url} => {str(e)}\n{exc}")

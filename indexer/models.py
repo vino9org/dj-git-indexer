@@ -1,6 +1,5 @@
 import os
 import re
-from typing import List
 
 from django.db import models
 from django_stubs_ext.db.models import TypedModelMeta
@@ -14,13 +13,13 @@ class Author(models.Model):
     class Meta(TypedModelMeta):
         db_table = "authors"
 
-    name: str = models.CharField(max_length=128)
-    email: str = models.CharField(max_length=1024)
-    real_name: str = models.CharField(max_length=128)
-    real_email: str = models.CharField(max_length=1024)
-    company: str = models.CharField(max_length=64, null=True)
-    team: str = models.CharField(max_length=64, null=True)
-    author_group: str = models.CharField(max_length=64, null=True)
+    name = models.CharField(max_length=128)
+    email = models.CharField(max_length=1024)
+    real_name = models.CharField(max_length=128)
+    real_email = models.CharField(max_length=1024)
+    company = models.CharField(max_length=64, null=True)
+    team = models.CharField(max_length=64, null=True)
+    author_group = models.CharField(max_length=64, null=True)
 
     def __str__(self) -> str:
         return f"Author(id={self.id}, email={self.email}, real_email={self.real_email}"
@@ -30,15 +29,15 @@ class Repository(models.Model):
     class Meta(TypedModelMeta):
         db_table = "repositories"
 
-    repo_type: str = models.CharField(max_length=20)
-    repo_name: str = models.CharField(max_length=128)
-    repo_group: str = models.CharField(max_length=64, null=True)
-    component: str = models.CharField(max_length=64, null=True)
-    clone_url: str = models.CharField(max_length=256)
-    browse_url: str = models.CharField(max_length=256)
-    is_active: bool = models.BooleanField(default=True)
-    last_indexed_at: str = models.CharField(max_length=32, null=True)
-    last_commit_at: str = models.CharField(max_length=32, null=True)
+    repo_type = models.CharField(max_length=20)
+    repo_name = models.CharField(max_length=128)
+    repo_group = models.CharField(max_length=64, null=True)
+    component = models.CharField(max_length=64, null=True)
+    clone_url = models.CharField(max_length=256)
+    browse_url = models.CharField(max_length=256)
+    is_active = models.BooleanField(default=True)
+    last_indexed_at = models.CharField(max_length=32, null=True)
+    last_commit_at = models.CharField(max_length=32, null=True)
 
     # relationships
     commits = models.ManyToManyField(
@@ -99,29 +98,29 @@ class Commit(models.Model):
     class Meta(TypedModelMeta):
         db_table = "commits"
 
-    sha: str = models.CharField(max_length=40, primary_key=True)
-    branches: str = models.CharField(max_length=1024, default="")
-    message: str = models.CharField(max_length=2048, default="")
-    created_at: str = models.CharField(max_length=32)
+    sha = models.CharField(max_length=40, primary_key=True)
+    branches = models.CharField(max_length=1024, default="")
+    message = models.CharField(max_length=2048, default="")
+    created_at = models.CharField(max_length=32)
 
     # metrics by pydriller
-    is_merge: bool = models.BooleanField(default=False)
-    n_lines: int = models.IntegerField(default=0)
-    n_files: int = models.IntegerField(default=0)
-    n_insertions: int = models.IntegerField(default=0)
-    n_deletions: int = models.IntegerField(default=0)
-    dmm_unit_size: float = models.FloatField(default=0.0)
-    dmm_unit_complexity: float = models.FloatField(default=0.0)
-    dmm_unit_interfacing: float = models.FloatField(default=0.0)
+    is_merge = models.BooleanField(default=False)
+    n_lines = models.IntegerField(default=0)
+    n_files = models.IntegerField(default=0)
+    n_insertions = models.IntegerField(default=0)
+    n_deletions = models.IntegerField(default=0)
+    dmm_unit_size = models.FloatField(default=0.0)
+    dmm_unit_complexity = models.FloatField(default=0.0)
+    dmm_unit_interfacing = models.FloatField(default=0.0)
     # should be populated from committed_files
-    n_lines_changed: int = models.IntegerField(default=0)
-    n_lines_ignored: int = models.IntegerField(default=0)
-    n_files_changed: int = models.IntegerField(default=0)
-    n_files_ignored: int = models.IntegerField(default=0)
+    n_lines_changed = models.IntegerField(default=0)
+    n_lines_ignored = models.IntegerField(default=0)
+    n_files_changed = models.IntegerField(default=0)
+    n_files_ignored = models.IntegerField(default=0)
 
     # relationships
-    author: Author = models.ForeignKey(Author, related_name="commits", on_delete=models.PROTECT)
-    repos: List[Repository] = models.ManyToManyField(
+    author = models.ForeignKey(Author, related_name="commits", on_delete=models.PROTECT)
+    repos = models.ManyToManyField(
         Repository,
         through="RepositoryCommitLink",
         through_fields=("commit", "repo"),
@@ -135,22 +134,22 @@ class CommittedFile(models.Model):
     class Meta(TypedModelMeta):
         db_table = "committed_files"
 
-    commit_sha: str = models.CharField(max_length=40)
-    change_type: str = models.CharField(max_length=16, default="UNKNOWN")
-    file_path: str = models.CharField(max_length=256)
-    file_name: str = models.CharField(max_length=128)
-    file_type: str = models.CharField(max_length=128)
+    commit_sha = models.CharField(max_length=40)
+    change_type = models.CharField(max_length=16, default="UNKNOWN")
+    file_path = models.CharField(max_length=256)
+    file_name = models.CharField(max_length=128)
+    file_type = models.CharField(max_length=128)
 
     # line metrics from Pydiller
-    n_lines_added: int = models.IntegerField(default=0)
-    n_lines_deleted: int = models.IntegerField(default=0)
-    n_lines_changed: int = models.IntegerField(default=0)
-    n_lines_of_code: int = models.IntegerField(default=0)
+    n_lines_added = models.IntegerField(default=0)
+    n_lines_deleted = models.IntegerField(default=0)
+    n_lines_changed = models.IntegerField(default=0)
+    n_lines_of_code = models.IntegerField(default=0)
     # metho metrics from pydriller
-    n_methods: int = models.IntegerField(default=0)
-    n_methods_changed: int = models.IntegerField(default=0)
-    is_on_exclude_list: bool = models.BooleanField(default=False)
-    is_superfluous: bool = models.BooleanField(default=False)
+    n_methods = models.IntegerField(default=0)
+    n_methods_changed = models.IntegerField(default=0)
+    is_on_exclude_list = models.BooleanField(default=False)
+    is_superfluous = models.BooleanField(default=False)
 
     # relationships
     commit = models.ForeignKey(Commit, related_name="files", on_delete=models.CASCADE)
@@ -178,5 +177,5 @@ class RepositoryCommitLink(models.Model):
         # table name is chosen to be compatible with existing schema predates this project
         db_table = "repo_to_commits"
 
-    commit: Commit = models.ForeignKey(Commit, on_delete=models.DO_NOTHING)
-    repo: Repository = models.ForeignKey(Repository, on_delete=models.DO_NOTHING)
+    commit = models.ForeignKey(Commit, on_delete=models.DO_NOTHING)
+    repo = models.ForeignKey(Repository, on_delete=models.DO_NOTHING)
