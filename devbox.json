@@ -9,6 +9,8 @@
       "poetry shell"
     ],
     "scripts": {
+      "idx": "poetry run python manage.py index --source gitlab --query 'securitybankph/' --filter '*'",
+      "app": "poetry run python manage.py runserver",
       "test": "poetry run pytest -v"
     }
   }
