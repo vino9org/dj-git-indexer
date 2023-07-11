@@ -1,5 +1,5 @@
 from functools import partial
-from typing import Iterable
+from typing import Iterator
 
 from django.core.management.base import BaseCommand
 
@@ -13,7 +13,7 @@ from indexer.utils import (
 from indexer.worker import index_repository, update_commit_stats
 
 
-def enumberate_from_file(source_file: str, query: str) -> Iterable[str]:
+def enumberate_from_file(source_file: str, query: str) -> Iterator[str]:
     with open(source_file, "r") as f:
         for line in f.readlines():
             line = line.strip()
