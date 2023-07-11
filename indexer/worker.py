@@ -112,6 +112,7 @@ def _new_commit_(git_commit: PyDrillerCommit) -> Commit:
         # dmm_unit_complexity=git_commit.dmm_unit_complexity,
         # dmm_unit_interfacing=git_commit.dmm_unit_interfacing,
         created_at=git_commit.committer_date.isoformat(timespec="seconds"),
+        created_ts=git_commit.committer_date,
     )
     commit.save()
 

@@ -102,6 +102,7 @@ class Commit(models.Model):
     branches = models.CharField(max_length=1024, default="")
     message = models.CharField(max_length=2048, default="")
     created_at = models.CharField(max_length=32)
+    created_ts = models.DateTimeField(null=True)
 
     # metrics by pydriller
     is_merge = models.BooleanField(default=False)
