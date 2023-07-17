@@ -5,6 +5,7 @@ import pytest
 from django.core.management import call_command
 
 from indexer.management.commands.index import enumberate_from_file
+from indexer.worker import export_all_data, update_commit_stats
 
 
 def invoke_command(cmdline: str) -> None:
@@ -43,3 +44,10 @@ def test_enumberate_from_file(tmp_path):
 
     repos = list(enumberate_from_file(repo_lst, ""))
     assert len(repos) == 1 and "repo1" in repos[0]
+
+
+def test_export_csv(tmp_path, db):
+    update_commit_stats()  # this creates the view we need
+    tmp_f = (tmp_path / "test.csv").as_posix()
+    export_all_data(tmp_f)
+    assert os.path.isfile(tmp_f) and os.stat(tmp_f).st_size > 0

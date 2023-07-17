@@ -1,3 +1,4 @@
+import csv
 import traceback
 from datetime import datetime
 
@@ -7,7 +8,7 @@ from pydriller import Repository as PyDrillerRepository
 from pydriller.domain.commit import Commit as PyDrillerCommit
 
 from .models import Author, Commit, CommittedFile, Repository
-from .sql import __STATS_SQL__
+from .sql import QUERY_SQL, STATS_SQL
 from .utils import (
     display_url,
     log,
@@ -86,7 +87,7 @@ def update_commit_stats() -> None:
     """update stats at commit level"""
     log("updating commit stats")
     conn = connection.cursor()
-    for statement in __STATS_SQL__:
+    for statement in STATS_SQL:
         try:
             conn.execute(statement)
         except DatabaseError as e:
@@ -140,3 +141,18 @@ def _new_commit_(git_commit: PyDrillerCommit) -> Commit:
         new_file.save()
 
     return commit
+
+
+def export_all_data(csv_file: str) -> None:
+    cursor = connection.cursor()
+    result = cursor.execute(QUERY_SQL["all_commit_data"])
+    columns = [col[0] for col in cursor.description]
+
+    n_rows = 0
+    with open(csv_file, "w", newline="") as csvfile:
+        writer = csv.writer(csvfile)
+        writer.writerow(columns)
+        for row in result.fetchall():
+            n_rows += 1
+            writer.writerow(row)
+        log(f"exported {n_rows} rows to {csv_file}")

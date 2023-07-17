@@ -1,3 +1,4 @@
+import os
 from functools import partial
 from typing import Iterator
 
@@ -9,8 +10,9 @@ from indexer.utils import (
     enumerate_local_repos,
     log,
     match_any,
+    upload_file,
 )
-from indexer.worker import index_repository, update_commit_stats
+from indexer.worker import export_all_data, index_repository, update_commit_stats
 
 
 def enumberate_from_file(source_file: str, query: str) -> Iterator[str]:
@@ -51,6 +53,17 @@ class Command(BaseCommand):
             required=True,
             help="source of repositories, e.g. local, github, gitlab",
         )
+        parser.add_argument(
+            "--export-csv",
+            dest="export_csv",
+            default="",
+            help="Export index result to CSV file",
+        )
+        parser.add_argument(
+            "--upload",
+            action="store_true",
+            default=False,
+        )
 
     def handle(self, *args, **options):
         # the sqlite3 database this program needs will reside in memory
@@ -88,3 +101,10 @@ class Command(BaseCommand):
             update_commit_stats()
 
         log(f"finished indexing {n_commits} commits in {n_repos} repositories")
+
+        csv_file = options["export_csv"]
+        if csv_file:
+            export_all_data(csv_file)
+
+            if options["upload"] and os.path.exists(csv_file) and os.stat(csv_file).st_size > 0:
+                upload_file(csv_file, os.path.basename(csv_file))

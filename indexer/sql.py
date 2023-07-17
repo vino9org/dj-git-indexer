@@ -1,4 +1,4 @@
-__STATS_SQL__ = [
+STATS_SQL = [
     """
     update commits
     set n_lines_changed = (
@@ -51,9 +51,10 @@ __STATS_SQL__ = [
             authors.real_email,
             authors.company,
             authors.team,
-            authors."group" as author_group,
+            authors.author_group,
             commits.sha,
             commits.created_at as commit_date,
+            commits.created_ts as commit_date_ts,
             commits.is_merge,
             commits.n_lines as commit_n_lines,
             commits.n_files as commit_n_files,
@@ -83,7 +84,7 @@ __STATS_SQL__ = [
             repo.clone_url,
             repo.browse_url,
             repo.id as repo_id,
-            repo.include_in_stats as repo_inlude_in_stats,
+            repo.is_active as repo_inlude_in_stats,
             repo.last_indexed_at
         from authors
             inner join commits on commits.author_id = authors.id
@@ -92,3 +93,8 @@ __STATS_SQL__ = [
             inner join repositories repo on rtc.repo_id = repo.id
         """,
 ]
+
+
+QUERY_SQL = {
+    "all_commit_data": " select * from all_commit_data limit 1000000",
+}
