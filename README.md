@@ -1,41 +1,56 @@
+# Utlity that scan git repositories and extract metrics
 
-# Welcome to your Python project
-
-This project is set up Python project with dev tooling pre-configured
-
-* black
-* flake8
-* isort
-* mypy
-* VS Code support
-
-## Setup
-
-The easiest way to get started is probably use [Jetpack.io devbox](https://www.jetpack.io/devbox). Install devbox first, then
+## Setup the environment
 
 ```shell
+
+# easist way, use jetpack.io devbox
 devbox shell
 
-# you should ready to go
-
-```
-
-The more traditional way is to install python 3.10 and [poetry](https://python-poetry.org/), then
-
-```shell
-
-# create virtualenv
+# or install python and poetry, then
 poetry shell
-# install dependencies
 poetry install
 
+# or the use plain old venv
+python -m venv venv
+source venv/bin/activate
+pip install requirements.txt
+
 ```
 
-## Develop the code for the stack
+## Run
 
 ```shell
+# set optional environment variables
+# only set it if testing with Gitlab and GCP is desired
 
-# run unit tests
-pytest
+GITLAB_TOKEN=glpat-xxxxxx
+GOOGLE_APPLICATION_CREDENTIALS=<some_crendenntial_json_file>
+
+# index repos hosted on github, export result to CSV file then upload to Google Cloud Storage
+GS_BUCKET_NAME=<gs bucket for upload> \
+python manage.py index \
+       --source github --query "sloppycoder/bank-demo" \
+       --export-csv test.csv --upload
+
+# index repos hosted on gitlab that matches the query and filter
+python manage.py index --source gitlab --query "vino9group" --filter "test*"
+
+# index local repos under a directory
+python manage.py index --source local --query "~/tmp/repos" --db local_repos.db
+
+# mirrors the repos hosted on gitlab to a local directory
+# overwrite local directory if they already exists
+python manage.py mirror --source gitlab --query "vino9group" --filter "test*" --output "~/tmp/repos" --overwrite
+
+# run the simple gui at http://127.0.0.1:8000
+python manage.py runserver
+```
+
+## Run Unit Tests
+
+```shell
+# run test and generate coverage report in HTML format in htmlcov directory
+pytest -v --cov . --cov-report html
 
 ```

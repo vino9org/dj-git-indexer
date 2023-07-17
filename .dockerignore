@@ -5,4 +5,9 @@
 # White-list what we need
 
 !requirements.txt
-!*.py
+!entrypoint.sh
+!manage.py
+!crawler/*.py
+!indexer/*.py
+!indexer/management/commands/*.py
+!template/**/*.html
