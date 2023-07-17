@@ -18,4 +18,10 @@ fi
 
 # make sure to set SQLITE_FILE to the sqlite database file to use
 
+python manage.py migrate --check
+if $? ; then
+    echo Migrations pending, aborting
+fi
+
+
 PYTHONUNBUFFERED=1 python manage.py index --source gitlab --query "$QUERY" --filter "$FILTER" --upload --export-csv /tmp/all_commit_data.csv
