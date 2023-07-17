@@ -1,0 +1,207 @@
+[
+  {
+    "mode": "REQUIRED",
+    "name": "author_id",
+    "type": "INTEGER"
+  },
+  {
+    "mode": "REQUIRED",
+    "name": "name",
+    "type": "STRING"
+  },
+  {
+    "mode": "REQUIRED",
+    "name": "email",
+    "type": "STRING"
+  },
+  {
+    "mode": "REQUIRED",
+    "name": "real_name",
+    "type": "STRING"
+  },
+  {
+    "mode": "REQUIRED",
+    "name": "real_email",
+    "type": "STRING"
+  },
+  {
+    "mode": "NULLABLE",
+    "name": "company",
+    "type": "STRING"
+  },
+  {
+    "mode": "NULLABLE",
+    "name": "team",
+    "type": "STRING"
+  },
+  {
+    "mode": "NULLABLE",
+    "name": "author_group",
+    "type": "STRING"
+  },
+  {
+    "mode": "REQUIRED",
+    "name": "sha",
+    "type": "STRING"
+  },
+  {
+    "mode": "REQUIRED",
+    "name": "commit_date",
+    "type": "TIMESTAMP"
+  },
+  {
+    "mode": "REQUIRED",
+    "name": "is_merge",
+    "type": "INTEGER"
+  },
+  {
+    "mode": "REQUIRED",
+    "name": "commit_n_lines",
+    "type": "INTEGER"
+  },
+  {
+    "mode": "REQUIRED",
+    "name": "commit_n_files",
+    "type": "INTEGER"
+  },
+  {
+    "mode": "REQUIRED",
+    "name": "commit_n_insertions",
+    "type": "INTEGER"
+  },
+  {
+    "mode": "REQUIRED",
+    "name": "commit_n_deletions",
+    "type": "INTEGER"
+  },
+  {
+    "mode": "REQUIRED",
+    "name": "commit_n_lines_changed",
+    "type": "INTEGER"
+  },
+  {
+    "mode": "REQUIRED",
+    "name": "commit_n_lines_ignored",
+    "type": "INTEGER"
+  },
+  {
+    "mode": "REQUIRED",
+    "name": "commit_n_files_changed",
+    "type": "INTEGER"
+  },
+  {
+    "mode": "REQUIRED",
+    "name": "commit_n_files_ignored",
+    "type": "INTEGER"
+  },
+  {
+    "mode": "REQUIRED",
+    "name": "committed_file_id",
+    "type": "INTEGER"
+  },
+  {
+    "mode": "REQUIRED",
+    "name": "change_type",
+    "type": "STRING"
+  },
+  {
+    "mode": "REQUIRED",
+    "name": "file_path",
+    "type": "STRING"
+  },
+  {
+    "mode": "REQUIRED",
+    "name": "file_name",
+    "type": "STRING"
+  },
+  {
+    "mode": "REQUIRED",
+    "name": "file_type",
+    "type": "STRING"
+  },
+  {
+    "mode": "REQUIRED",
+    "name": "n_lines_added",
+    "type": "INTEGER"
+  },
+  {
+    "mode": "REQUIRED",
+    "name": "n_lines_deleted",
+    "type": "INTEGER"
+  },
+  {
+    "mode": "REQUIRED",
+    "name": "n_lines_changed",
+    "type": "INTEGER"
+  },
+  {
+    "mode": "REQUIRED",
+    "name": "n_lines_of_code",
+    "type": "INTEGER"
+  },
+  {
+    "mode": "REQUIRED",
+    "name": "n_methods",
+    "type": "INTEGER"
+  },
+  {
+    "mode": "REQUIRED",
+    "name": "n_methods_changed",
+    "type": "INTEGER"
+  },
+  {
+    "mode": "REQUIRED",
+    "name": "is_on_exclude_list",
+    "type": "BOOLEAN"
+  },
+  {
+    "mode": "REQUIRED",
+    "name": "is_superfluous",
+    "type": "BOOLEAN"
+  },
+  {
+    "mode": "REQUIRED",
+    "name": "repo_name",
+    "type": "STRING"
+  },
+  {
+    "mode": "NULLABLE",
+    "name": "repo_group",
+    "type": "STRING"
+  },
+  {
+    "mode": "NULLABLE",
+    "name": "repo_type",
+    "type": "STRING"
+  },
+  {
+    "mode": "NULLABLE",
+    "name": "component",
+    "type": "STRING"
+  },
+  {
+    "mode": "REQUIRED",
+    "name": "clone_url",
+    "type": "STRING"
+  },
+  {
+    "mode": "NULLABLE",
+    "name": "browse_url",
+    "type": "STRING"
+  },
+  {
+    "mode": "REQUIRED",
+    "name": "repo_id",
+    "type": "INTEGER"
+  },
+  {
+    "mode": "REQUIRED",
+    "name": "repo_inlude_in_stats",
+    "type": "BOOLEAN"
+  },
+  {
+    "mode": "NULLABLE",
+    "name": "last_indexed_at",
+    "type": "TIMESTAMP"
+  }
+]
