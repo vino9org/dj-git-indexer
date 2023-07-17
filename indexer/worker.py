@@ -1,4 +1,6 @@
 import csv
+import os
+import sqlite3
 import traceback
 from datetime import datetime
 
@@ -86,10 +88,10 @@ def index_repository(clone_url: str, git_repo_type: str = "", show_progress: boo
 def update_commit_stats() -> None:
     """update stats at commit level"""
     log("updating commit stats")
-    conn = connection.cursor()
+    cursor = connection.cursor()
     for statement in STATS_SQL:
         try:
-            conn.execute(statement)
+            cursor.execute(statement)
         except DatabaseError as e:
             exc = traceback.format_exc()
             print(f"Exception execute statement {statement} => {str(e)}\n{exc}")
@@ -156,3 +158,21 @@ def export_all_data(csv_file: str) -> None:
             n_rows += 1
             writer.writerow(row)
         log(f"exported {n_rows} rows to {csv_file}")
+
+
+def export_db(dbf: str):
+    if "sqlite" not in connection._connections.settings[connection._alias]["ENGINE"]:
+        log("not a sqlite database, not exporting")
+        return
+
+    # export database to file
+    # write to temp file first then rename to avoid potentially corrupting the database
+    tmp_file = dbf + ".new"
+    file_conn = sqlite3.connect(tmp_file)
+    connection.cursor().connection.backup(file_conn)
+    file_conn.close()
+
+    if dbf and os.path.exists(dbf):
+        os.unlink(dbf)
+    os.rename(tmp_file, dbf)
+    log(f"saved database to {dbf}")

@@ -3,7 +3,7 @@ import os
 import pytest
 
 from indexer.models import Repository, RepositoryCommitLink
-from indexer.worker import index_repository
+from indexer.worker import export_db, index_repository
 
 
 def test_index_github_repo(db, github_test_repo):
@@ -13,6 +13,13 @@ def test_index_github_repo(db, github_test_repo):
 @pytest.mark.skipif(os.environ.get("GITLAB_TOKEN") is None, reason="gitlab token not available")
 def test_index_gitlab_repo(db, gitlab_test_repo):
     assert index_repository(f"https://gitlab.com/vino9/{gitlab_test_repo}") > 0
+
+
+def test_export_db(db, tmp_path):
+    # indexer should already have some data
+    tmp_f = (tmp_path / "test.db").as_posix()
+    export_db(tmp_f)
+    assert os.path.isfile(tmp_f) and os.stat(tmp_f).st_size > 0
 
 
 def test_index_local_repo(db, local_repo):
