@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "Git Indexer"
-version = "0.5.0"
+version = "0.9.0"
 description = "Index git commits from various repositories and store them in a database for analysis. Built with Django."
 authors = ["Li Lin <guru.lin@gmail.com>"]
 license = "MIT"
