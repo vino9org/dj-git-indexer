@@ -55,7 +55,7 @@ STATS_SQL = [
             commits.sha,
             commits.created_at as commit_date,
             commits.created_ts as commit_date_ts,
-            commits.is_merge,
+            CASE WHEN commits.is_merge THEN 1 ELSE 0 as is_merge,
             commits.n_lines as commit_n_lines,
             commits.n_files as commit_n_files,
             commits.n_insertions as commit_n_insertions,
@@ -91,7 +91,7 @@ STATS_SQL = [
             inner join committed_files on committed_files.commit_id = commits.sha
             inner join repo_to_commits rtc on commits.sha = rtc.commit_id
             inner join repositories repo on rtc.repo_id = repo.id
-        """,
+        """,  # convert is_merge to integer to make it compatible to the existing schema that I cannot change.
 ]
 
 
