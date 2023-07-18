@@ -73,7 +73,7 @@ WSGI_APPLICATION = "crawler.wsgi.application"
 DATABASES = {
     "default": {
         "ENGINE": "django.db.backends.sqlite3",
-        "NAME": BASE_DIR / os.getenv("SQLITE_FILE", "db/git-indexer.db"),
+        "NAME": os.getenv("SQLITE_FILE", BASE_DIR / "db/git-indexer.db"),
     }
 }
 
