@@ -20,10 +20,4 @@ if $? ; then
     python manage.py migrate
 fi
 
-export PYTHONUNBUFFERED=1
-
-if [ "$1" = "index" ]; then
-    python manage.py index --source gitlab --query "$QUERY" --filter "$FILTER" --upload --export-csv /tmp/all_commit_data.csv
-else
-    gunicorn --workers=1 crawler.wsgi --bind=0.0.0.0:5000
-fi
+PYTHONUNBUFFERED=1 python manage.py index --source gitlab --query "$QUERY" --filter "$FILTER" --upload --export-csv /tmp/all_commit_data.csv
