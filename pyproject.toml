@@ -19,6 +19,7 @@ pygithub = "^1.59.0"
 storage = "^0.0.4.3"
 google-cloud-storage = "^2.10.0"
 django-bootstrap-v5 = "^1.0.11"
+gunicorn = "^21.0.1"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]

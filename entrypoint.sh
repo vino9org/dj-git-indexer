@@ -1,27 +1,29 @@
 #!/bin/sh
 
-if [ "$DATA_DIR" = "" ]; then
-    DATA_DIR="/data/git-indexer"
+if [ "$SQLITE_FILE" = "" ]; then
+    SQLITE_FILE="/data/git-indexer/git-indexer.db"
 fi
 
-mkdir -p $DATA_DIR
-
-if [ ! -d "/root/.ssh" ]; then
-    # something is not right, let's wait for help
-    sleep 7200
+if [ ! -f "$SQLITE_FILE"  ]; then
+    echo $SQLITE_FILE does not exist, aborting.
+    exit 1
 fi
-
 
 if [ "$FILTER" = "" ]; then
     FILTER="*"
 fi
 
-# make sure to set SQLITE_FILE to the sqlite database file to use
 
 python manage.py migrate --check
 if $? ; then
-    echo Migrations pending, aborting
+    echo running migrations before starting app
+    python manage.py migrate
 fi
 
+export PYTHONUNBUFFERED=1
 
-PYTHONUNBUFFERED=1 python manage.py index --source gitlab --query "$QUERY" --filter "$FILTER" --upload --export-csv /tmp/all_commit_data.csv
+if [ "$1" = "index" ]; then
+    python manage.py index --source gitlab --query "$QUERY" --filter "$FILTER" --upload --export-csv /tmp/all_commit_data.csv
+else
+    gunicorn --workers=1 crawler.wsgi --bind=0.0.0.0:5000
+fi

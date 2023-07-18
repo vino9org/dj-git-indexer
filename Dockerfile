@@ -12,4 +12,6 @@ FROM python:3.10-slim-bullseye
 COPY --from=builder /install /
 COPY . .
 
+EXPOSE 5000
+
 CMD  ["/bin/sleep", "10000"]
