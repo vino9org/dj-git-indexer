@@ -52,7 +52,7 @@ jobs:
 
     - name: Unit tests
       run: |
-        pytest -v -s
+        pytest -v  --cov . --cov-report term
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
