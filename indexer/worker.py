@@ -98,10 +98,14 @@ def update_commit_stats() -> None:
 
 
 def _new_commit_(git_commit: PyDrillerCommit) -> Commit:
-    author, _ = Author.objects.get_or_create(
+    author, created = Author.objects.get_or_create(
         name=git_commit.committer.name.lower(),
         email=git_commit.committer.email.lower(),
     )
+    if created:
+        author.real_name = author.name
+        author.real_email = author.email
+        author.save()
 
     commit = Commit(
         sha=git_commit.hash,
