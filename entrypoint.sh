@@ -15,9 +15,10 @@ fi
 
 
 python manage.py migrate --check
-if $? ; then
+if [ $? -ne 0 ]; then
     echo running migrations before starting app
     python manage.py migrate
 fi
 
-PYTHONUNBUFFERED=1 python manage.py index --source gitlab --query "$QUERY" --filter "$FILTER" --upload --export-csv /tmp/all_commit_data.csv
+CSV_DIR=$(dirname $SQLITE_FILE)
+PYTHONUNBUFFERED=1 python manage.py index --source gitlab --query "$QUERY" --filter "$FILTER" --upload --export-csv $CSV_DIR/all_commit_data.csv
