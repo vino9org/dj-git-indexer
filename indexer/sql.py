@@ -55,7 +55,7 @@ STATS_SQL = [
             commits.sha,
             commits.created_at as commit_date,
             commits.created_ts as commit_date_ts,
-            CASE WHEN commits.is_merge THEN 1 ELSE 0 as is_merge,
+            case commits.is_merge when true then 1 else 0 end as is_merge,
             commits.n_lines as commit_n_lines,
             commits.n_files as commit_n_files,
             commits.n_insertions as commit_n_insertions,
