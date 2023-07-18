@@ -50,7 +50,10 @@ def test_ignore_patterns():
 
     # Next.js build
     assert should_exclude_from_stats("someapp/.next/_app.js")
+    assert should_exclude_from_stats("webretail/.next/static/chunks/pages/_app.js")
     assert should_exclude_from_stats("webretail/.next/static/webpack/pages/indexupdate.js")
+    assert should_exclude_from_stats("webretail/.next/server/pages/_document.js")
+    assert should_exclude_from_stats("common/assets/Styling/_mixins.scss")
 
     # IDE/Editor files
     assert should_exclude_from_stats(".vscode/settings.json")

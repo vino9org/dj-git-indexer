@@ -25,6 +25,7 @@ _IGNORE_PATTERNS_ = [
     re.compile(r".*\.(jar|pbxproj|lock|bk|bak|backup|class|swp|sum|pdf|png)$"),
     re.compile(r"^.*/?package-lock\.json$"),
     re.compile(r"^.*/?(\.next|node_modules|\.devcontainer)(/|$).*"),
+    re.compile(r"(^|.*/)_.*\.(js|scss)$"),
 ]
 
 
