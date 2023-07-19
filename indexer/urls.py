@@ -6,5 +6,5 @@ app_name = "indexer"
 
 urlpatterns = [
     path("", views.index, name=""),
-    path("search", views.SearchPageView.as_view(), name="search"),
+    path("search", views.search, name="search"),
 ]

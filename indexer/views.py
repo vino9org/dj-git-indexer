@@ -5,7 +5,6 @@ from django.contrib import messages
 from django.http import HttpResponseRedirect
 from django.shortcuts import render
 from django.urls import reverse
-from django.views.generic import FormView
 
 from indexer.models import Author, Commit, Repository
 
@@ -16,49 +15,46 @@ class SearchForm(forms.Form):
     query = forms.CharField(label="", max_length=60)
 
 
-class SearchPageView(FormView):
-    template_name = "indexer/search.html"
-    form_class = SearchForm
+def search(request):
+    query = request.GET.get("query")
+    message, commits, xfilter = None, [], None
 
-    def get(self, request):
-        query = request.GET.get("query")
-        # query = "li.a.lin@accenture.com"
-        message, commits = None, []
+    if query and len(query) == 40 and re.match(r"[0-9a-f]{40}", query):
+        try:
+            commits = [Commit.objects.get(sha=query)]
+        except Commit.DoesNotExist:
+            message = f"cannot find commit {query}"
 
-        if query and len(query) == 40 and re.match(r"[0-9a-f]{40}", query):
-            try:
-                commits = [Commit.objects.get(sha=query)]
-            except Commit.DoesNotExist:
-                message = f"cannot find commit {query}"
-
-        elif query and "@" in query:  # search by email address
-            match = re.search(r"\b(\S+@\S+)\b", query)  # extract the email address
-            if match:
-                search_email = match[0]
-                authors = Author.objects.filter(real_email=search_email).all()
-                if len(authors) > 0:
-                    commits = Commit.objects.filter(author__id__in=[a.id for a in authors],).order_by(
-                        "-n_lines_changed"
-                    )[:_PAGE_SIZE_]
-                else:
-                    message = f"cannot find any author with the email {search_email}"
+    elif query and "@" in query:  # search by email address
+        match = re.search(r"\b(\S+@\S+)\b", query)  # extract the email address
+        if match:
+            search_email = match[0]
+            authors = Author.objects.filter(real_email=search_email).all()
+            if len(authors) > 0:
+                xfilter = {"author__id__in": [a.id for a in authors]}
             else:
-                message = "please enter a valid email address"
+                message = f"cannot find any author with the email {search_email}"
+        else:
+            message = "please enter a valid email address"
 
-        elif query:  # search by repository name
-            repo = Repository.objects.filter(repo_name=query).first()
-            if repo:
-                commits = Commit.objects.filter(repos__id=repo.id,).order_by(
-                    "-n_lines_changed"
-                )[:_PAGE_SIZE_]
-            else:
-                message = f"cannot find any repository that matchs {query}"
+    elif query:  # search by repository name
+        repo = Repository.objects.filter(repo_name=query).first()
+        if repo:
+            xfilter = {"repos__id": repo.id}
+        else:
+            message = f"cannot find any repository that matchs {query}"
 
-        if message:
-            messages.error(request, message)
+    if xfilter:
+        commits = _commits_by_filter_(xfilter)
+    elif message:
+        messages.error(request, message)
 
-        return render(request, self.template_name, {"form": SearchForm(), "commits": commits})
+    return render(request, "indexer/search.html", {"form": SearchForm(), "commits": commits})
 
 
 def index(request):
     return HttpResponseRedirect(reverse("indexer:search"))
+
+
+def _commits_by_filter_(kwargs):
+    return Commit.objects.filter(**kwargs).order_by("-n_lines_changed")[:_PAGE_SIZE_]
