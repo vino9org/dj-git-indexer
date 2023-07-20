@@ -28,4 +28,6 @@ gcloud functions deploy load_csv_to_bigquery \
 # after deployment, go into console and add environment variable
 # BQ_PROJECT_ID to <project-id> of the BigQuery project
 
+gcloud functions logs read load_csv_to_bigquery  --region us-west1
+
 ```
