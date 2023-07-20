@@ -17,8 +17,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 BASE_DIR = Path(__file__).resolve().parent.parent
-SECRET_KEY = os.getenv("DJANGO_SECRET")
-SECRET_KEY = SECRET_KEY if SECRET_KEY else os.urandom(32)
+SECRET_KEY = os.getenv("DJANGO_SECRET", os.urandom(32).hex())
 DEBUG = os.getenv("DEBUG_MODE", "") != "0"
 ALLOWED_HOSTS = [os.getenv("DJANGO_HOST", "*"), "127.0.0.1", "[::1]"]
 

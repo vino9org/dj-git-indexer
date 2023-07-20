@@ -75,6 +75,7 @@ show_column_numbers = true
 show_error_codes = true
 show_error_context = true
 mypy_path = "."
+exclude = "gcp"
 
 [mypy.plugins.django-stubs]
 django_settings_module = "crawler.settings"

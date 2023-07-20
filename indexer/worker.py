@@ -165,7 +165,7 @@ def export_all_data(csv_file: str) -> None:
 
 
 def export_db(dbf: str):
-    if "sqlite" not in connection._connections.settings[connection._alias]["ENGINE"]:
+    if "sqlite" not in connection._connections.settings[connection._alias]["ENGINE"]:  # type: ignore
         log("not a sqlite database, not exporting")
         return
 

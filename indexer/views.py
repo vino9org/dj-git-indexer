@@ -1,8 +1,9 @@
 import re
+from typing import Any, Iterable
 
 from django import forms
 from django.contrib import messages
-from django.http import HttpResponseRedirect
+from django.http import HttpRequest, HttpResponse, HttpResponseRedirect
 from django.shortcuts import render
 from django.urls import reverse
 
@@ -15,9 +16,12 @@ class SearchForm(forms.Form):
     query = forms.CharField(label="", max_length=60)
 
 
-def search(request):
+def search(request: HttpRequest) -> HttpResponse:
     query = request.GET.get("query")
-    message, commits, xfilter = None, [], None
+
+    message = ""
+    commits: Iterable[Commit] = []
+    xfilter: dict[str, Any] = {}
 
     if query and len(query) == 40 and re.match(r"[0-9a-f]{40}", query):
         try:
@@ -52,9 +56,9 @@ def search(request):
     return render(request, "indexer/search.html", {"form": SearchForm(), "commits": commits})
 
 
-def index(request):
+def index(request: HttpRequest) -> HttpResponse:
     return HttpResponseRedirect(reverse("indexer:search"))
 
 
-def _commits_by_filter_(kwargs):
+def _commits_by_filter_(kwargs: dict[str, Any]) -> Iterable[Commit]:
     return Commit.objects.filter(**kwargs).order_by("-n_lines_changed")[:_PAGE_SIZE_]
