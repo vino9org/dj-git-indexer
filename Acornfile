@@ -1,0 +1,23 @@
+args: {
+  db_file: "/data/git-indexer/git-indexer.db"
+}
+
+containers: {
+  gui: {
+    build: "."
+    ports: publish: "8000/http"
+    dirs: {
+      "/data": "volume://db-vol"
+    }
+    env: {
+      "SQLITE_FILE" : args.db_file
+    }
+    cmd: ["gunicorn", "-w", "1", "crawler.wsgi", "--bind", "0.0.0.0:8000"]
+  }
+}
+
+volumes: {
+  "db-vol": {
+    size: "1Gi"
+  }
+}
