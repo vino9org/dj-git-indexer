@@ -28,6 +28,7 @@ class Author(models.Model):
 class Repository(models.Model):
     class Meta(TypedModelMeta):
         db_table = "repositories"
+        verbose_name_plural = "repositories"
 
     repo_type = models.CharField(max_length=20)
     repo_name = models.CharField(max_length=128)
