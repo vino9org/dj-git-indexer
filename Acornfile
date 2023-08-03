@@ -10,9 +10,8 @@ containers: {
       "/data": "volume://db-vol"
     }
     env: {
-      "SQLITE_FILE" : args.db_file
+      "DATABASE_URL" : "sqlite:////data/git-indexer/git-indexer.db"
     }
-    cmd: ["gunicorn", "-w", "1", "crawler.wsgi", "--bind", "0.0.0.0:8000"]
   }
 }
 

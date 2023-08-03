@@ -1,12 +1,13 @@
 #!/bin/sh
 
-if [ "$SQLITE_FILE" = "" ]; then
-    SQLITE_FILE="/data/git-indexer/git-indexer.db"
+if [ "$DATABASE_URL" = "" ]; then
+    echo DATABASE_URL not set, aborting.
+    exit 1
 fi
 
-if [ ! -f "$SQLITE_FILE"  ]; then
-    echo $SQLITE_FILE does not exist, aborting.
-    exit 1
+if [ "$RUN_MODE" != "index" ]; then
+    gunicorn -w 1 crawler.wsgi --bind 0.0.0.0:8000
+    exit 0
 fi
 
 if [ "$FILTER" = "" ]; then
@@ -20,5 +21,4 @@ if [ $? -ne 0 ]; then
     python manage.py migrate
 fi
 
-CSV_DIR=$(dirname $SQLITE_FILE)
-PYTHONUNBUFFERED=1 python manage.py index --source gitlab --query "$QUERY" --filter "$FILTER" --upload --export-csv $CSV_DIR/all_commit_data.csv
+PYTHONUNBUFFERED=1 python manage.py index --source gitlab --query "$QUERY" --filter "$FILTER" --upload --export-csv /tmp/all_commit_data.csv
