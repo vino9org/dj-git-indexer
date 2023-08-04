@@ -5,6 +5,12 @@ if [ "$DATABASE_URL" = "" ]; then
     exit 1
 fi
 
+python manage.py migrate --check
+if [ $? -ne 0 ]; then
+    echo running migrations before starting app
+    python manage.py migrate
+fi
+
 if [ "$RUN_MODE" != "index" ]; then
     gunicorn -w 1 crawler.wsgi --bind 0.0.0.0:8000
     exit 0
@@ -12,13 +18,6 @@ fi
 
 if [ "$FILTER" = "" ]; then
     FILTER="*"
-fi
-
-
-python manage.py migrate --check
-if [ $? -ne 0 ]; then
-    echo running migrations before starting app
-    python manage.py migrate
 fi
 
 PYTHONUNBUFFERED=1 python manage.py index --source gitlab --query "$QUERY" --filter "$FILTER" --upload --export-csv /tmp/all_commit_data.csv
