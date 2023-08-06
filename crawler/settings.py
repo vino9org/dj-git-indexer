@@ -22,6 +22,7 @@ SECRET_KEY = os.getenv("DJANGO_SECRET", os.urandom(32).hex())
 DEBUG = os.getenv("DEBUG_MODE", "") != "0"
 ALLOWED_HOSTS = [os.getenv("DJANGO_HOST", "*"), "127.0.0.1", "[::1]"]
 USE_X_FORWARDED_HOST = True
+FORCE_SCRIPT_NAME = os.getenv("DJANGO_CONTEXT_PATH", "/")
 
 # Application definition
 
@@ -112,9 +113,12 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/4.2/howto/static-files/
 
-STATIC_URL = "static/"
+STATIC_ROOT = os.path.join(BASE_DIR, "static")
+STATIC_URL = FORCE_SCRIPT_NAME + "static/"
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/4.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
+
+CSRF_TRUSTED_ORIGINS = ["http://localhost:8080", "http://192.168.1.204"]

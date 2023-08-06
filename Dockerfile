@@ -19,3 +19,5 @@ COPY --from=builder /install /
 COPY . .
 
 CMD  ["/bin/sh", "/entrypoint.sh"]
+
+EXPOSE 8000
