@@ -1,5 +1,5 @@
 args: {
-  db_file: "/data/git-indexer/git-indexer.db"
+  db_url: "sqlite:////data/git-indexer/git-indexer.db"
 }
 
 containers: {
@@ -7,16 +7,62 @@ containers: {
     build: "."
     ports: publish: "8000/http"
     dirs: {
-      "/data": "volume://db-vol"
+      "/data" : "volume://db"
     }
     env: {
-      "DATABASE_URL" : "sqlite:////data/git-indexer/git-indexer.db"
+      "DATABASE_URL" : args.db_url,
+      "GOOGLE_APPLICATION_CREDENTIALS" : "/etc/secret/gs-vinolab-user.json",
+      "GITLAB_TOKEN" : "secret://gitlab-token/gitlab-token"
+    }
+  }
+}
+
+jobs: {
+  indexer: {
+    schedule: "30 2,11-21/4 * * 1-5"
+    build: "."
+    ports: publish: "8000/http"
+    dirs: {
+      "/data" : "volume://vol2"
+      "/root/.ssh" : "secret://git-ssh-key"
+      "/etc/secret/gs-vinolab-user.json" : "secret://gs-cred",
+    }
+    env: {
+      "DATABASE_URL" : args.db_url
+      "RUN_MODE": "index"
     }
   }
 }
 
 volumes: {
-  "db-vol": {
+  "db": {
+    // accessModes: "readWriteMany"
+    accessModes: "readWriteOnce"
     size: "1Gi"
   }
+  "vol2": {
+    accessModes: "readWriteOnce"
+    size: "100Mi"
+  }
+}
+
+// make sure to create secrets before acorn run
+// acorn secret create -A  --data @id_ed25519=id_ed25519 \
+//                        --data @id_ed25519.pub=id_ed25519.pub \
+//                        --data @ssh_known_hosts=known_hosts \
+//                        git-ssh-key
+
+// acorn secret create -A  --data @gs-vinolab-user.json=gs-vinolab-user.json gs-cred
+// acorn secret create -A  --data gitlab-token=glpat-xxx sbc-gitlab-token
+
+secrets: {
+    "gitlab-token": {
+        external: "sbc-gitlab-token"
+    },
+    "gs-cred": {
+        external: "gs-cred"
+    },
+    "git-ssh-key" : {
+        external: "git-ssh-key"
+    }
 }
