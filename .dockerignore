@@ -1,6 +1,8 @@
 # Ignore everything
 
+.**
 **
+
 
 # White-list what we need
 
@@ -11,3 +13,4 @@
 !indexer/*.py
 !indexer/management/commands/*.py
 !template/**/*.html
+!static/admin/**

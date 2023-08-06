@@ -20,4 +20,12 @@ if [ "$FILTER" = "" ]; then
     FILTER="*"
 fi
 
-PYTHONUNBUFFERED=1 python manage.py index --source gitlab --query "$QUERY" --filter "$FILTER" --upload --export-csv /tmp/all_commit_data.csv
+CMD=python manage.py index --source gitlab --query "$QUERY" --filter "$FILTER"
+
+if [ "SKIP_UPLOAD" != "1" ]; then
+    CMD=$CMD --upload --export-csv /tmp/all_commit_data.csv
+fi
+
+export PYTHONUNBUFFERED=1
+
+$CMD
