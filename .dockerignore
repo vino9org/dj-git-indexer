@@ -3,7 +3,6 @@
 .**
 **
 
-
 # White-list what we need
 
 !requirements.txt
@@ -12,5 +11,5 @@
 !crawler/*.py
 !indexer/*.py
 !indexer/management/commands/*.py
-!template/**/*.html
-!static/admin/**
+!templates/**
+!static/**

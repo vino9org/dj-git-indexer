@@ -12,7 +12,7 @@ if [ $? -ne 0 ]; then
 fi
 
 if [ "$RUN_MODE" != "index" ]; then
-    gunicorn -w 1 crawler.wsgi --bind 0.0.0.0:8000
+    gunicorn -w 1 crawler.wsgi --access-logfile - --bind 0.0.0.0:8000
     exit 0
 fi
 
@@ -20,12 +20,10 @@ if [ "$FILTER" = "" ]; then
     FILTER="*"
 fi
 
-CMD=python manage.py index --source gitlab --query "$QUERY" --filter "$FILTER"
+CMD="python manage.py index --source gitlab --query $QUERY --filter $FILTER"
 
 if [ "SKIP_UPLOAD" != "1" ]; then
-    CMD=$CMD --upload --export-csv /tmp/all_commit_data.csv
+    CMD="$CMD --upload --export-csv /tmp/all_commit_data.csv"
 fi
 
-export PYTHONUNBUFFERED=1
-
-$CMD
+PYTHONUNBUFFERED=1 $CMD
