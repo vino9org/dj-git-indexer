@@ -10,8 +10,8 @@ containers: {
       "/data" : "volume://db"
     }
     env: {
-      "DATABASE_URL" : args.db_url,
-      "GOOGLE_APPLICATION_CREDENTIALS" : "/etc/secret/gs-vinolab-user.json",
+      "DATABASE_URL" : args.db_url
+      "GOOGLE_APPLICATION_CREDENTIALS" : "/etc/secret/gs-vinolab-user.json"
     }
   }
 }
@@ -24,7 +24,7 @@ jobs: {
     dirs: {
       "/data" : "volume://db"
       "/root/.ssh" : "secret://git-ssh-key"
-      "/etc/secret/gs-vinolab-user.json" : "secret://gs-cred",
+      "/etc/secret/gs-vinolab-user.json" : "secret://gs-cred"
     }
     env: {
       "DATABASE_URL" : args.db_url
@@ -32,6 +32,7 @@ jobs: {
       "QUERY": "/securitybankph"
       "FILTER": "*"
       "GITLAB_TOKEN" : "secret://gitlab-token/gitlab-token"
+      "SKIP_UPLOAD" : "1"
     }
   }
 }
@@ -55,13 +56,13 @@ volumes: {
 // acorn secret create -A  --data gitlab-token=glpat-xxx sbc-gitlab-token
 
 secrets: {
-    "gitlab-token": {
-        external: "sbc-gitlab-token"
-    },
-    "gs-cred": {
-        external: "gs-cred"
-    },
-    "git-ssh-key" : {
-        external: "git-ssh-key"
-    }
+  "gitlab-token": {
+    external: "sbc-gitlab-token"
+  },
+  "gs-cred": {
+    external: "gs-cred"
+  },
+  "git-ssh-key" : {
+    external: "git-ssh-key"
+  }
 }
