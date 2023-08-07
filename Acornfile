@@ -1,5 +1,5 @@
 args: {
-  db_url: "sqlite:////data/git-indexer/git-indexer.db"
+  db_url: "sqlite:////data/git-indexer.db"
 }
 
 containers: {
@@ -12,7 +12,6 @@ containers: {
     env: {
       "DATABASE_URL" : args.db_url,
       "GOOGLE_APPLICATION_CREDENTIALS" : "/etc/secret/gs-vinolab-user.json",
-      "GITLAB_TOKEN" : "secret://gitlab-token/gitlab-token"
     }
   }
 }
@@ -23,26 +22,26 @@ jobs: {
     build: "."
     ports: publish: "8000/http"
     dirs: {
-      "/data" : "volume://vol2"
+      "/data" : "volume://db"
       "/root/.ssh" : "secret://git-ssh-key"
       "/etc/secret/gs-vinolab-user.json" : "secret://gs-cred",
     }
     env: {
       "DATABASE_URL" : args.db_url
       "RUN_MODE": "index"
+      "QUERY": "/securitybankph"
+      "FILTER": "*"
+      "GITLAB_TOKEN" : "secret://gitlab-token/gitlab-token"
     }
   }
 }
 
 volumes: {
   "db": {
-    // accessModes: "readWriteMany"
-    accessModes: "readWriteOnce"
+    accessModes: "readWriteMany"
+    class: "nfs-client"
+    //accessModes: "readWriteOnce"
     size: "1Gi"
-  }
-  "vol2": {
-    accessModes: "readWriteOnce"
-    size: "100Mi"
   }
 }
 
