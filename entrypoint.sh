@@ -16,14 +16,10 @@ if [ "$RUN_MODE" != "index" ]; then
     exit 0
 fi
 
-if [ "$FILTER" = "" ]; then
-    FILTER="*"
+if [ "SKIP_UPLOAD" = "1" ]; then
+    EXTRA_ARGS=""
+else
+    EXTRA_ARGS=" --upload --export-csv /tmp/all_commit_data.csv"
 fi
 
-CMD="python manage.py index --source gitlab --query $QUERY --filter $FILTER"
-
-if [ "SKIP_UPLOAD" != "1" ]; then
-    CMD="$CMD --upload --export-csv /tmp/all_commit_data.csv"
-fi
-
-PYTHONUNBUFFERED=1 $CMD
+PYTHONUNBUFFERED=1 python manage.py index --source gitlab --query "$QUERY" --filter "$FILTER" $EXTRA_ARGS
