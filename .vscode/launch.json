@@ -5,11 +5,23 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "Python: Current File",
+            "name": "Run mirror",
             "type": "python",
             "request": "launch",
-            "program": "${file}",
+            "program": "manage.py",
             "console": "integratedTerminal",
+            "args": [
+                "mirror",
+                "--source",
+                "gitlab",
+                "--query",
+                "securitybankph/",
+                "--filter",
+                "*",
+                "--output",
+                "/Users/lee/tmp/sgc",
+                "--overwrite"
+            ],
             "justMyCode": false
         },
         {
