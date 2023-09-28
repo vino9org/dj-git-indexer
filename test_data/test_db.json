@@ -20,8 +20,7 @@
             "repo_name": "repo",
             "repo_group": null,
             "component": null,
-            "clone_url": "git@github.com:super/repo.git",
-            "browse_url": "https://github.com/super/repo",
+            "clone_url": "https://github.com/super/repo.git",
             "is_active": true,
             "last_indexed_at": null,
             "last_commit_at": null
@@ -36,7 +35,6 @@
             "repo_group": null,
             "component": null,
             "clone_url": "https://gitlab.com/dummy/repo.git",
-            "browse_url": "https://gitlab.com/dummy/repo",
             "is_active": true,
             "last_indexed_at": null,
             "last_commit_at": null

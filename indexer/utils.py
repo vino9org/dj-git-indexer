@@ -1,12 +1,10 @@
 import fnmatch
 import os
 import re
-import socket
 import sys
 import warnings
 from datetime import datetime
 from typing import Iterator, List, Optional
-from urllib.parse import urlparse
 
 import gitlab
 import psutil
@@ -60,18 +58,6 @@ def match_any(path: str, patterns: str) -> bool:
     return any(fnmatch.fnmatch(path, pattern) for pattern in patterns.split(","))
 
 
-def clone_to_browse_url(clone_url: str) -> str:
-    """convert ssh based clone url to https based url"""
-    url = urlparse(clone_url)
-    http_url = ""
-    if url.scheme in ["http", "https"]:
-        http_url = clone_url
-    elif url.scheme in ["ssh", "ssh+git"] or (url.scheme == "" and url.path.startswith("git@")):
-        host, path = re.sub(r"^git@", "", url.path).split(":")
-        http_url = f"https://{host}/{path}"
-    return re.sub(r"\.git$", "", http_url)
-
-
 def should_exclude_from_stats(path: str) -> bool:
     """
     return true if the path should be ignore
@@ -104,8 +90,11 @@ def enumerate_gitlab_repos(
             sys.exit(1)
 
     gl = gitlab.Gitlab(url, private_token=private_token, per_page=100)
-    for project in gl.search(scope="projects", search=query, get_all=True):
-        clone_url = project["ssh_url_to_repo"]
+    for project in gl.search(scope="projects", search=query):
+        repo = gl.projects.get(project["id"])
+        clone_url = repo.http_url_to_repo
+        if repo.visibility == "private":
+            clone_url = clone_url.replace("://", f"://oauth2:{private_token}@")
         yield clone_url
 
 
@@ -115,8 +104,11 @@ def enumerate_github_repos(query: str, access_token: Optional[str] = None, useHt
 
     try:
         gh = Github(auth=Auth.Token(access_token)) if access_token else Github()
-        for rep in gh.search_repositories(query=query):
-            yield rep.ssh_url
+        for repo in gh.search_repositories(query=query):
+            clone_url = repo.clone_url
+            if repo.private:
+                clone_url = clone_url.replace("://", f"://{access_token}:@")
+            yield clone_url
     except BadCredentialsException as e:
         print(f"authentication error => {e}")
     except Exception as e:
@@ -188,9 +180,5 @@ def normalize_branches(branches: List[str]) -> str:
     return ",".join(keys)[:1024]
 
 
-def patch_ssh_gitlab_url(clone_url: str) -> str:
-    # unfortunate ssh_config on this machine
-    if clone_url.startswith("git@gitlab.com") and socket.gethostname() == "uno.local":
-        return clone_url.replace("git@gitlab.com", "git@gitlab-sbc")
-    else:
-        return clone_url
+def redact_http_url(http_url: str) -> str:
+    return re.sub(r"(?<=://)[^/]*@", "", http_url)

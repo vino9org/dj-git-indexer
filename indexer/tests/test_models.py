@@ -14,12 +14,12 @@ def test_query_models(db):
     # test commit to repo many-to-many relation
     repos = commit.repos.all()
     assert len(repos) == 2
-    assert repos[0].browse_url == "https://github.com/super/repo"
+    assert repos[0].clone_url == "https://github.com/super/repo.git"
 
     commit2 = Commit.objects.get(sha="ee474544052762d314756bb7439d6dab73221d3d")
     assert commit2 is not None and len(commit2.repos.all()) == 1
 
     # test repo to commit many-to-many relation
-    repo = Repository.objects.get(clone_url="git@github.com:super/repo.git")
+    repo = Repository.objects.get(clone_url="https://github.com/super/repo.git")
     assert repo is not None
     assert len(repo.commits.all()) == 2

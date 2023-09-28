@@ -5,7 +5,6 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     initial = True
 
     dependencies = []
@@ -66,7 +65,6 @@ class Migration(migrations.Migration):
                 ("repo_group", models.CharField(max_length=64, null=True)),
                 ("component", models.CharField(max_length=64, null=True)),
                 ("clone_url", models.CharField(max_length=256)),
-                ("browse_url", models.CharField(max_length=256)),
                 ("is_active", models.BooleanField(default=True)),
                 ("last_indexed_at", models.CharField(max_length=32, null=True)),
                 ("last_commit_at", models.CharField(max_length=32, null=True)),

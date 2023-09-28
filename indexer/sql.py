@@ -82,7 +82,6 @@ STATS_SQL = [
             repo.repo_type,
             repo.component,
             repo.clone_url,
-            repo.browse_url,
             repo.id as repo_id,
             repo.is_active as repo_inlude_in_stats,
             repo.last_indexed_at

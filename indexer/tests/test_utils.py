@@ -3,13 +3,13 @@ import os
 import pytest
 
 from indexer.utils import (
-    clone_to_browse_url,
     display_url,
     enumerate_github_repos,
     enumerate_gitlab_repos,
     enumerate_local_repos,
     match_any,
     normalize_branches,
+    redact_http_url,
     should_exclude_from_stats,
     upload_file,
 )
@@ -87,15 +87,6 @@ def test_match_any():
     assert not match_any("/Users/lee/tmp/shared/bbx/cookiecutter-springboot3.git", "*/bbx/bbx*")
 
 
-def test_clone_to_browse_url():
-    assert clone_to_browse_url("https://gitlab.com/someuser/some_repo.git") == "https://gitlab.com/someuser/some_repo"
-    assert (
-        clone_to_browse_url("git@github.com:sloppycoder/k3s-fluxcd-vinolab.git")
-        == "https://github.com/sloppycoder/k3s-fluxcd-vinolab"
-    )
-    assert clone_to_browse_url("file://base_dir/def/my.git") == ""
-
-
 def test_enumerate_local_repos(local_repo):
     repos = list(enumerate_local_repos(local_repo))
     assert len(repos) > 0
@@ -145,3 +136,14 @@ def test_normalize_branches():
             "some_random_long_branch_name",
         ]
     )
+
+
+def test_redact_http_url():
+    base_url = "https://gitlab.com/some_namespace/some_project.git"
+    assert redact_http_url(base_url) == base_url
+
+    gitlab_url = base_url.replace("://", "://oauth2:1234567890@")
+    assert redact_http_url(gitlab_url) == base_url
+
+    github_url = base_url.replace("://", "://ghpat_blah1234567890:@")
+    assert redact_http_url(github_url) == base_url

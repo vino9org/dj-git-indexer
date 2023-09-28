@@ -15,7 +15,7 @@ from .utils import (
     display_url,
     log,
     normalize_branches,
-    patch_ssh_gitlab_url,
+    redact_http_url,
     should_exclude_from_stats,
 )
 
@@ -27,7 +27,8 @@ def index_repository(clone_url: str, git_repo_type: str = "", show_progress: boo
         log(f"starting to index {display_url(clone_url)}")
         start_t = datetime.now()
 
-        repo, _ = Repository.objects.get_or_create(clone_url=clone_url, repo_type=git_repo_type)
+        base_url = redact_http_url(clone_url)
+        repo, _ = Repository.objects.get_or_create(clone_url=base_url, repo_type=git_repo_type)
         if repo.is_active is False:
             log(f"### skipping inactive repository {display_url(clone_url)}")
             return 0
@@ -37,8 +38,7 @@ def index_repository(clone_url: str, git_repo_type: str = "", show_progress: boo
         for commit in repo.commits.all():
             old_commits[commit.sha] = commit
 
-        url = patch_ssh_gitlab_url(clone_url)  # kludge: workaround for some unfortunate ssh setup
-        for git_commit in PyDrillerRepository(url, include_refs=True, include_remotes=True).traverse_commits():
+        for git_commit in PyDrillerRepository(clone_url, include_refs=True, include_remotes=True).traverse_commits():
             # impose some timeout to avoid spending tons of time on very large repositories
             if (datetime.now() - start_t).seconds > timeout:  # pragma: no cover
                 print(f"### indexing not done after {timeout} seconds, aborting {display_url(clone_url)}")

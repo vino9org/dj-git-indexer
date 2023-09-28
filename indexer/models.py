@@ -4,8 +4,6 @@ import re
 from django.db import models
 from django_stubs_ext.db.models import TypedModelMeta
 
-from .utils import clone_to_browse_url
-
 _REPO_TYPES_ = ["gitlab", "gitlab_private", "github", "bitbucket", "bitbucket_private", "local", "other"]
 
 
@@ -35,7 +33,6 @@ class Repository(models.Model):
     repo_group = models.CharField(max_length=64, null=True)
     component = models.CharField(max_length=64, null=True)
     clone_url = models.CharField(max_length=256)
-    browse_url = models.CharField(max_length=256)
     is_active = models.BooleanField(default=True)
     last_indexed_at = models.CharField(max_length=32, null=True)
     last_commit_at = models.CharField(max_length=32, null=True)
@@ -47,9 +44,14 @@ class Repository(models.Model):
         through_fields=("repo", "commit"),
     )
 
-    # create a constructor to set browse_url based on clone_url
+    # updated 2023-09-28:
+    # remove ssh support for clone_url, only http is supported
+    # browse_url is converted to a propery
     def __init__(self, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
+
+        if self.clone_url.startswith("git@"):
+            raise ValueError("ssh clone url is not supported")
 
         # if it's an existing record, do nothing
         if self.id:
@@ -58,26 +60,27 @@ class Repository(models.Model):
         if self.repo_type and self.repo_type not in _REPO_TYPES_:
             raise ValueError(f"repo_type must be one of {_REPO_TYPES_}")
 
-        # try to determine repo_type is not provided
-        if not self.repo_type:
-            if self.clone_url.startswith("http") or self.clone_url.startswith("git@"):
-                # remote repo
-                if "gitlab" in self.clone_url:
-                    self.repo_type = "gitlab"
-                elif "github.com" in self.clone_url:
-                    self.repo_type = "github"
-                elif "bitbucket.com" in self.clone_url:
-                    self.repo_type = "bitbucket"
-            else:
-                self.repo_type = "local"
-
-        if self.repo_type == "local":
-            self.browse_url = "http://localhost:9000/gitweb/"
+        # try to determine repo_type when not provided
+        if not self.repo_type and self.clone_url.startswith("http"):
+            # remote repo
+            if "gitlab" in self.clone_url:
+                self.repo_type = "gitlab"
+            elif "github.com" in self.clone_url:
+                self.repo_type = "github"
+            elif "bitbucket.com" in self.clone_url:
+                self.repo_type = "bitbucket"
         else:
-            self.browse_url = clone_to_browse_url(self.clone_url)
+            self.repo_type = "local"
 
         name = os.path.basename(self.clone_url)  # works for both http and git@ style url
         self.repo_name = re.sub(r".git$", "", name)
+
+    @property
+    def browse_url(self) -> str:
+        if self.repo_type == "local":
+            return "http://localhost:9000/gitweb/"
+        else:
+            return re.sub(r".git$", "", self.clone_url)
 
     @property
     def url_for_commit(self) -> str:
@@ -92,7 +95,7 @@ class Repository(models.Model):
             return ""
 
     def __str__(self) -> str:
-        return f"Repository(id={self.id}, url={self.browse_url}, clone_url={self.clone_url})"
+        return f"Repository(id={self.id}, url={self.clone_url})"
 
 
 class Commit(models.Model):

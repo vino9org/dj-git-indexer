@@ -30,7 +30,7 @@ def django_db_setup(django_db_setup, django_db_blocker):
 
 @pytest.fixture(scope="session")
 def gitlab_test_repo():
-    return "test-project-1.git"
+    return "hello-api.git"
 
 
 @pytest.fixture(scope="session")
@@ -60,7 +60,7 @@ def seed_data():
     commit2, _ = Commit.objects.get_or_create(sha="ee474544052762d314756bb7439d6dab73221d3d", author=me, created_at=now)
     commit3, _ = Commit.objects.get_or_create(sha="e2c8b79813b95c93e5b06c5a82e4c417d5020762", author=me, created_at=now)
 
-    repo1, _ = Repository.objects.get_or_create(clone_url="git@github.com:super/repo.git", repo_type="github")
+    repo1, _ = Repository.objects.get_or_create(clone_url="https://github.com/super/repo.git", repo_type="github")
     repo2, _ = Repository.objects.get_or_create(clone_url="https://gitlab.com/dummy/repo.git", repo_type="gitlab")
 
     repo1.commits.set([commit1, commit2])
