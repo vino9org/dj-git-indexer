@@ -6,32 +6,40 @@ from datetime import datetime
 
 from django.db import DatabaseError, connection
 from git.exc import GitCommandError
+from gitlab.v4.objects import projects
 from pydriller import Repository as PyDrillerRepository
 from pydriller.domain.commit import Commit as PyDrillerCommit
 
-from .models import Author, Commit, CommittedFile, Repository
+from .models import Author, Commit, CommittedFile, MergeRequest, ensure_repository
 from .sql import QUERY_SQL, STATS_SQL
 from .utils import (
     display_url,
+    gitlab_timestamp_to_iso,
     log,
     normalize_branches,
     redact_http_url,
     should_exclude_from_stats,
 )
 
+GITLAB_TIMETSAMP_FORMAT = "%Y-%m-%dT%H:%M:%S.%fZ"
 
-def index_repository(clone_url: str, git_repo_type: str = "", show_progress: bool = False, timeout: int = 28800) -> int:
+
+def index_commits(clone_url: str, git_repo_type: str = "", show_progress: bool = False, timeout: int = 28800) -> int:
     n_branch_updates, n_new_commits = 0, 0
+    log_url = display_url(redact_http_url(clone_url))
 
     try:
-        log(f"starting to index {display_url(clone_url)}")
-        start_t = datetime.now()
-
-        base_url = redact_http_url(clone_url)
-        repo, _ = Repository.objects.get_or_create(clone_url=base_url, repo_type=git_repo_type)
-        if repo.is_active is False:
-            log(f"### skipping inactive repository {display_url(clone_url)}")
+        repo = ensure_repository(clone_url, git_repo_type)
+        if repo is None:
+            log(f"### cannot create repostitory object for {log_url}")
             return 0
+
+        if repo.is_active is False:
+            log(f"### skipping inactive repository {log_url}")
+            return 0
+
+        log(f"starting to index {log_url}")
+        start_t = datetime.now()
 
         # use list comprehension to force loading of commits
         old_commits = {}
@@ -41,7 +49,7 @@ def index_repository(clone_url: str, git_repo_type: str = "", show_progress: boo
         for git_commit in PyDrillerRepository(clone_url, include_refs=True, include_remotes=True).traverse_commits():
             # impose some timeout to avoid spending tons of time on very large repositories
             if (datetime.now() - start_t).seconds > timeout:  # pragma: no cover
-                print(f"### indexing not done after {timeout} seconds, aborting {display_url(clone_url)}")
+                print(f"### indexing not done after {timeout} seconds, aborting {log_url}")
                 break
 
             if git_commit.hash in old_commits:
@@ -74,14 +82,90 @@ def index_repository(clone_url: str, git_repo_type: str = "", show_progress: boo
         return n_new_commits + n_branch_updates
 
     except GitCommandError as e:
-        print(f"{e._cmdline} returned {e.stderr} for {clone_url}")
+        print(f"{e._cmdline} returned {e.stderr} for {log_url}")
     except DatabaseError as e:
         exc = traceback.format_exc()
-        print(f"DatabaseError indexing repository {clone_url} => {str(e)}\n{exc}")
+        print(f"DatabaseError indexing repository {log_url} => {str(e)}\n{exc}")
     except Exception as e:  # pragma: no cover
         exc = traceback.format_exc()
-        print(f"Exception indexing repository {clone_url} => {str(e)}\n{exc}")
+        print(f"Exception indexing repository {log_url} => {str(e)}\n{exc}")
 
+    return 0
+
+
+def index_gitlab_merge_requests(project: projects.Project, show_progress: bool = False) -> int:
+    n_requests = 0
+    log_url = display_url(project.http_url_to_repo)
+
+    try:
+        repo = ensure_repository(project.http_url_to_repo, "gitlab")
+        if repo is None:
+            log(f"### cannot create repostitory object for {log_url}")
+            return 0
+
+        if repo.is_active is False:
+            log(f"### skipping inactive repository {log_url}")
+            return 0
+
+        log(f"starting to index merge requests for {log_url}")
+
+        merge_requests = project.mergerequests.list(all=True)
+        for mr in merge_requests:
+            mr_id = mr.get_id()
+
+            if mr.state not in ["closed", "merged"]:
+                # index only closed or merged merge requests
+                continue
+
+            db_obj = MergeRequest.objects.filter(request_id=mr_id, repo=repo).first()
+            if db_obj is not None:
+                # merge request already indexed
+                continue
+
+            is_merged, merged_by_username, merge_commit_sha = False, None, None
+            if mr.state == "merged":
+                is_merged, merged_by_username = True, mr.merge_user["username"]
+                merge_commit_sha = mr.squash_commit_sha if mr.squash else mr.merge_commit_sha
+
+            MergeRequest.objects.create(
+                repo=repo,
+                request_id=mr_id,
+                state=mr.state,
+                source_branch=mr.source_branch,
+                target_branch=mr.target_branch,
+                source_sha=mr.sha,
+                merge_sha=merge_commit_sha,
+                created_at=gitlab_timestamp_to_iso(mr.created_at),
+                merged_at=gitlab_timestamp_to_iso(mr.merged_at),
+                updated_at=gitlab_timestamp_to_iso(mr.updated_at),
+                # first_comment_at = models.CharField(max_length=32)
+                is_merged=is_merged,
+                merged_by_username=merged_by_username,
+            ).save()
+
+            n_requests += 1
+
+            if n_requests > 0 and n_requests % 50 == 0 and show_progress:
+                log(f"indexed {n_requests:3,} merge requests ")
+
+        if n_requests > 0:
+            log(f"indexed {n_requests:3,} merge requests in the repository")
+
+        return n_requests
+
+    except GitCommandError as e:
+        print(f"{e._cmdline} returned {e.stderr} for {log_url}")
+    except DatabaseError as e:
+        exc = traceback.format_exc()
+        print(f"DatabaseError indexing repository {log_url} => {str(e)}\n{exc}")
+    except Exception as e:  # pragma: no cover
+        exc = traceback.format_exc()
+        print(f"Exception indexing repository {log_url} => {str(e)}\n{exc}")
+
+    return 0
+
+
+def index_github_merge_requests(project: projects.Project, show_progress: bool = False) -> int:
     return 0
 
 

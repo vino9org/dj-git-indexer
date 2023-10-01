@@ -25,6 +25,22 @@
             "justMyCode": false
         },
         {
+            "name": "Run index",
+            "type": "python",
+            "request": "launch",
+            "program": "manage.py",
+            "console": "integratedTerminal",
+            "args": [
+                "index",
+                "--source",
+                "gitlab",
+                "--query",
+                "securitybankph/rtd/bbx/cs/account-service",
+                "--merge_requests_only",
+            ],
+            "justMyCode": false
+        },
+        {
             "name": "Django",
             "type": "python",
             "request": "launch",

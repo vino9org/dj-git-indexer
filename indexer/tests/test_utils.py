@@ -7,6 +7,7 @@ from indexer.utils import (
     enumerate_github_repos,
     enumerate_gitlab_repos,
     enumerate_local_repos,
+    gitlab_timestamp_to_iso,
     match_any,
     normalize_branches,
     redact_http_url,
@@ -90,17 +91,21 @@ def test_match_any():
 def test_enumerate_local_repos(local_repo):
     repos = list(enumerate_local_repos(local_repo))
     assert len(repos) > 0
+    assert list(repos)[0][1] is None
 
 
 @pytest.mark.skipif(os.environ.get("GITLAB_TOKEN") is None, reason="gitlab token not available")
 def test_enumerate_gitlab_repos(gitlab_test_repo):
-    repos = list(enumerate_gitlab_repos(gitlab_test_repo))
+    query = gitlab_test_repo.split("/")[1]
+    repos = list(enumerate_gitlab_repos(query))
     assert len(repos) > 0
+    assert list(repos)[0][1].visibility is not None
 
 
 def test_enumerate_github_repos(github_test_repo):
     repos = list(enumerate_github_repos(github_test_repo))
     assert len(repos) > 0
+    assert list(repos)[0][1].private is not None
 
 
 def test_display_url():
@@ -147,3 +152,7 @@ def test_redact_http_url():
 
     github_url = base_url.replace("://", "://ghpat_blah1234567890:@")
     assert redact_http_url(github_url) == base_url
+
+
+def test_gitlab_timestamp_to_iso():
+    assert gitlab_timestamp_to_iso("2021-08-31T09:00:00.000Z") == "2021-08-31T09:00:00+00:00"

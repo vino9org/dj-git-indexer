@@ -4,6 +4,8 @@ import re
 from django.db import models
 from django_stubs_ext.db.models import TypedModelMeta
 
+from indexer.utils import redact_http_url
+
 _REPO_TYPES_ = ["gitlab", "gitlab_private", "github", "bitbucket", "bitbucket_private", "local", "other"]
 
 
@@ -61,16 +63,17 @@ class Repository(models.Model):
             raise ValueError(f"repo_type must be one of {_REPO_TYPES_}")
 
         # try to determine repo_type when not provided
-        if not self.repo_type and self.clone_url.startswith("http"):
-            # remote repo
-            if "gitlab" in self.clone_url:
-                self.repo_type = "gitlab"
-            elif "github.com" in self.clone_url:
-                self.repo_type = "github"
-            elif "bitbucket.com" in self.clone_url:
-                self.repo_type = "bitbucket"
-        else:
-            self.repo_type = "local"
+        if self.repo_type is None:
+            if self.clone_url.startswith("http"):
+                # remote repo
+                if "gitlab" in self.clone_url:
+                    self.repo_type = "gitlab"
+                elif "github.com" in self.clone_url:
+                    self.repo_type = "github"
+                elif "bitbucket.com" in self.clone_url:
+                    self.repo_type = "bitbucket"
+            else:
+                self.repo_type = "local"
 
         name = os.path.basename(self.clone_url)  # works for both http and git@ style url
         self.repo_name = re.sub(r".git$", "", name)
@@ -184,3 +187,37 @@ class RepositoryCommitLink(models.Model):
 
     commit = models.ForeignKey(Commit, on_delete=models.DO_NOTHING)
     repo = models.ForeignKey(Repository, on_delete=models.DO_NOTHING)
+
+
+class MergeRequest(models.Model):
+    class Meta(TypedModelMeta):
+        db_table = "merge_requests"
+
+    request_id = models.CharField(max_length=40)
+    title = models.CharField(max_length=1024)
+    state = models.CharField(max_length=32)
+
+    source_sha = models.CharField(max_length=256, default="")
+    source_branch = models.CharField(max_length=256, default="")
+    target_branch = models.CharField(max_length=256, null=True, default="")
+    merge_sha = models.CharField(max_length=256, null=True, default="")
+
+    created_at = models.CharField(max_length=32)
+    merged_at = models.CharField(max_length=32, null=True)
+    updated_at = models.CharField(max_length=32, null=True)
+    first_comment_at = models.CharField(max_length=32, null=True)
+
+    is_merged = models.BooleanField(default=False)
+    merged_by_username = models.CharField(max_length=32, null=True)
+
+    has_tests = models.BooleanField(default=False)
+    has_test_passed = models.BooleanField(default=False)
+
+    # relationships
+    repo = models.ForeignKey(Repository, related_name="merge_requests", on_delete=models.CASCADE)
+
+
+def ensure_repository(url: str, repo_type: str) -> Repository:
+    base_url = redact_http_url(url)
+    repo, _ = Repository.objects.get_or_create(clone_url=base_url, repo_type=repo_type)
+    return repo

@@ -23,3 +23,8 @@ def test_query_models(db):
     repo = Repository.objects.get(clone_url="https://github.com/super/repo.git")
     assert repo is not None
     assert len(repo.commits.all()) == 2
+
+    # test repo to merge request one-to-many relation
+    requests = repo.merge_requests.all()
+    assert len(requests) == 2
+    assert requests[0].request_id == "MR1"

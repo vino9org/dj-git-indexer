@@ -4,7 +4,7 @@ import re
 import sys
 import warnings
 from datetime import datetime
-from typing import Iterator, List, Optional
+from typing import Any, Iterator, List, Optional, Tuple
 
 import gitlab
 import psutil
@@ -69,7 +69,7 @@ def should_exclude_from_stats(path: str) -> bool:
     return False
 
 
-def enumerate_local_repos(base_dir: str) -> Iterator[str]:
+def enumerate_local_repos(base_dir: str) -> Iterator[Tuple[str, Any]]:
     for root, dirs, _ in os.walk(os.path.expanduser(base_dir), topdown=True):
         if ".git" in dirs:
             dirs.remove(".git")
@@ -77,12 +77,12 @@ def enumerate_local_repos(base_dir: str) -> Iterator[str]:
         for dd in dirs:
             abs_path = os.path.abspath(root + "/" + dd)
             if is_git_repo(abs_path):
-                yield abs_path
+                yield abs_path, None
 
 
 def enumerate_gitlab_repos(
     query: str, private_token: Optional[str] = None, url: str = "https://gitlab.com"
-) -> Iterator[str]:
+) -> Iterator[Tuple[str, Any]]:
     if private_token is None:
         private_token = os.environ.get("GITLAB_TOKEN")
         if not private_token:
@@ -95,10 +95,12 @@ def enumerate_gitlab_repos(
         clone_url = repo.http_url_to_repo
         if repo.visibility == "private":
             clone_url = clone_url.replace("://", f"://oauth2:{private_token}@")
-        yield clone_url
+        yield clone_url, repo
 
 
-def enumerate_github_repos(query: str, access_token: Optional[str] = None, useHttpUrl: bool = False) -> Iterator[str]:
+def enumerate_github_repos(
+    query: str, access_token: Optional[str] = None, useHttpUrl: bool = False
+) -> Iterator[Tuple[str, Any]]:
     if access_token is None:
         access_token = os.environ.get("GITHUB_TOKEN")
 
@@ -108,7 +110,7 @@ def enumerate_github_repos(query: str, access_token: Optional[str] = None, useHt
             clone_url = repo.clone_url
             if repo.private:
                 clone_url = clone_url.replace("://", f"://{access_token}:@")
-            yield clone_url
+            yield clone_url, repo
     except BadCredentialsException as e:
         print(f"authentication error => {e}")
     except Exception as e:
@@ -180,5 +182,12 @@ def normalize_branches(branches: List[str]) -> str:
     return ",".join(keys)[:1024]
 
 
-def redact_http_url(http_url: str) -> str:
-    return re.sub(r"(?<=://)[^/]*@", "", http_url)
+def redact_http_url(url: str) -> str:
+    return re.sub(r"(?<=://)[^/]*@", "", url)
+
+
+def gitlab_timestamp_to_iso(ts: str) -> None | str:
+    if ts is None:
+        return None
+    else:
+        return datetime.strptime(ts, "%Y-%m-%dT%H:%M:%S.%f%z").astimezone().isoformat(timespec="seconds")

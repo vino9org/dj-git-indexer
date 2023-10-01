@@ -3,16 +3,22 @@ import os
 import pytest
 
 from indexer.models import Repository, RepositoryCommitLink
-from indexer.worker import export_db, index_repository
+from indexer.worker import export_db, index_commits, index_gitlab_merge_requests
 
 
 def test_index_github_repo(db, github_test_repo):
-    assert index_repository(f"https://github.com/{github_test_repo}.git") > 3
+    assert index_commits(f"https://github.com/{github_test_repo}.git") > 3
 
 
 @pytest.mark.skipif(os.environ.get("GITLAB_TOKEN") is None, reason="gitlab token not available")
 def test_index_gitlab_repo(db, gitlab_test_repo):
-    assert index_repository(f"https://gitlab.com/vino9/{gitlab_test_repo}") > 0
+    assert index_commits(f"https://gitlab.com/{gitlab_test_repo}") > 0
+
+
+@pytest.mark.skipif(os.environ.get("GITLAB_TOKEN") is None, reason="gitlab token not available")
+def test_index_gitlab_merge_requests(db, gitlab, gitlab_test_repo):
+    project = gitlab.projects.get(gitlab_test_repo)
+    assert index_gitlab_merge_requests(project) > 0
 
 
 def test_export_db(db, tmp_path):
@@ -33,22 +39,22 @@ def test_index_local_repo(db, local_repo):
 
     # index a new repo for the 1st time
     repo1 = local_repo + "/repo1"
-    assert index_repository(repo1, "local") == 2
+    assert index_commits(repo1, "local") == 2
     repo1_sha = repo_hashes(repo1)
     assert len(repo1_sha) == 2
 
     # index a clone shouldn't create new commits that is in the original repo
     repo1_clone = local_repo + "/repo1_clone"
-    assert index_repository(repo1_clone, "local") == 3
+    assert index_commits(repo1_clone, "local") == 3
     repo1_clone_sha = repo_hashes(repo1_clone)
     assert len(repo1_clone_sha) == 3
 
     # empty repo should not throw any exception
     empty_repo = local_repo + "/empty_repo"
-    assert index_repository(empty_repo, "local") == 0
+    assert index_commits(empty_repo, "local") == 0
 
     # index a repo for the 2nd time should not increase the number of commits
-    assert index_repository(repo1, "local") == 0
+    assert index_commits(repo1, "local") == 0
     repo1_sha = repo_hashes(repo1)
     assert len(repo1_sha) == 2
 

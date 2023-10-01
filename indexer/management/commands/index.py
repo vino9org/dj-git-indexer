@@ -12,7 +12,13 @@ from indexer.utils import (
     match_any,
     upload_file,
 )
-from indexer.worker import export_all_data, index_repository, update_commit_stats
+from indexer.worker import (
+    export_all_data,
+    index_commits,
+    index_github_merge_requests,
+    index_gitlab_merge_requests,
+    update_commit_stats,
+)
 
 
 def enumberate_from_file(source_file: str, query: str) -> Iterator[str]:
@@ -34,6 +40,11 @@ class Command(BaseCommand):
             default=False,
         )
         parser.add_argument(
+            "--merge_requests_only",
+            action="store_true",
+            default=False,
+        )
+        parser.add_argument(
             "--filter",
             dest="filter",
             required=False,
@@ -46,6 +57,13 @@ class Command(BaseCommand):
             required=False,
             default="",
             help="Query for Github or Gitlab. For local repos, the base path",
+        )
+        parser.add_argument(
+            "--mode",
+            dest="query",
+            required=False,
+            default="commits",
+            help="commits",
         )
         parser.add_argument(
             "--source",
@@ -66,11 +84,7 @@ class Command(BaseCommand):
         )
 
     def handle(self, *args, **options):
-        # the sqlite3 database this program needs will reside in memory
-        # for performance reason as well as ability to run in serverless environment
-        # we'll load the database from disk if it exists
-        # after indexing is done we'll save the database in memory back to disk
-        n_repos, n_commits = 0, 0
+        n_repos, n_commits, n_merge_quests = 0, 0, 0
 
         source = options["source"]
         query = options["query"]
@@ -90,11 +104,19 @@ class Command(BaseCommand):
         # speical undocumented query string for update the stats only
         # do not index any repos
         if query != "_stats_":
-            for repo_url in enumerator(query):
+            for repo_url, project in enumerator(query):
                 if match_any(repo_url, options["filter"]):
                     if not options["dry_run"]:
                         source = "other" if source == "list" else source
-                        n_commits += index_repository(repo_url, source, show_progress=True)
+                        if options["merge_requests_only"]:
+                            if source == "gitlab":
+                                n_merge_quests += index_gitlab_merge_requests(project, show_progress=True)
+                            elif source == "github":
+                                n_merge_quests += index_github_merge_requests(project, show_progress=True)
+                            else:
+                                print(f"don't know how to index merge_request for {source}")
+                        else:
+                            n_commits += index_commits(repo_url, source, show_progress=True)
                         n_repos += 1
 
         if n_commits or query == "_stats_":

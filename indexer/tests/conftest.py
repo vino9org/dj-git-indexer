@@ -9,6 +9,9 @@ import pytest
 from django.conf import settings
 from django.core.management import call_command
 from dotenv import find_dotenv, load_dotenv
+from gitlab import Gitlab
+
+from indexer.models import MergeRequest
 
 load_dotenv(find_dotenv(".env.test"))
 
@@ -29,8 +32,17 @@ def django_db_setup(django_db_setup, django_db_blocker):
 
 
 @pytest.fixture(scope="session")
+def gitlab():
+    private_token = os.environ.get("GITLAB_TOKEN")
+    if private_token:
+        yield Gitlab("https://gitlab.com", private_token=private_token, per_page=100)
+    else:
+        yield None
+
+
+@pytest.fixture(scope="session")
 def gitlab_test_repo():
-    return "hello-api.git"
+    return "vino9/test-project-1"
 
 
 @pytest.fixture(scope="session")
@@ -82,4 +94,20 @@ def seed_data():
     )
     CommittedFile.objects.get_or_create(
         file_path="app/App.js", file_name="App.js", change_type="UPDATE", commit=commit1
+    )
+
+    MergeRequest.objects.create(
+        request_id="MR1",
+        title="Merge Request 1",
+        source_branch="feature/feature-1",
+        target_branch="develop",
+        repo=repo1,
+    )
+
+    MergeRequest.objects.create(
+        request_id="MR2",
+        title="Merge Request 2",
+        source_branch="feature/feature-2",
+        target_branch="develop",
+        repo=repo1,
     )

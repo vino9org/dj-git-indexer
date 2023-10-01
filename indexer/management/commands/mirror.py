@@ -112,7 +112,7 @@ class Command(BaseCommand):
             print("don't nkow how to mirror local repos")
             return None
 
-        for repo_url in enumerator(options["query"]):
+        for repo_url, _ in enumerator(options["query"]):
             if match_any(repo_url, options["filter"]):
                 print(f"Mirroring {repo_url} to {output}")
                 mirror_repo(repo_url, output, options["dry_run"], options["overwrite"])
