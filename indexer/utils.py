@@ -186,8 +186,8 @@ def redact_http_url(url: str) -> str:
     return re.sub(r"(?<=://)[^/]*@", "", url)
 
 
-def gitlab_timestamp_to_iso(ts: str) -> None | str:
+def gitlab_ts_to_datetime(ts: None | str) -> None | datetime:
     if ts is None:
         return None
     else:
-        return datetime.strptime(ts, "%Y-%m-%dT%H:%M:%S.%f%z").astimezone().isoformat(timespec="seconds")
+        return datetime.strptime(ts, "%Y-%m-%dT%H:%M:%S.%f%z")

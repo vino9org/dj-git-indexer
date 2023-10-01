@@ -7,7 +7,7 @@ from indexer.utils import (
     enumerate_github_repos,
     enumerate_gitlab_repos,
     enumerate_local_repos,
-    gitlab_timestamp_to_iso,
+    gitlab_ts_to_datetime,
     match_any,
     normalize_branches,
     redact_http_url,
@@ -154,5 +154,7 @@ def test_redact_http_url():
     assert redact_http_url(github_url) == base_url
 
 
-def test_gitlab_timestamp_to_iso():
-    assert gitlab_timestamp_to_iso("2021-08-31T09:00:00.000Z") == "2021-08-31T09:00:00+00:00"
+def test_gitlab_ts_to_datetime():
+    assert gitlab_ts_to_datetime(None) is None
+    dt = gitlab_ts_to_datetime("2021-08-31T09:00:00.000Z")
+    assert (dt.year, dt.month, dt.second) == (2021, 8, 0)

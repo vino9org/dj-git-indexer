@@ -4,7 +4,6 @@ import pytest
 
 from indexer.models import Repository, RepositoryCommitLink
 from indexer.worker import (
-    export_db,
     index_commits,
     index_github_pull_requests,
     index_gitlab_merge_requests,
@@ -29,13 +28,6 @@ def test_index_gitlab_merge_requests(db, gitlab, gitlab_test_repo):
 def test_index_github_pull_requests(db, github, github_test_repo):
     repo = github.get_repo(github_test_repo)
     assert index_github_pull_requests(repo) > 0
-
-
-def test_export_db(db, tmp_path):
-    # indexer should already have some data
-    tmp_f = (tmp_path / "test.db").as_posix()
-    export_db(tmp_f)
-    assert os.path.isfile(tmp_f) and os.stat(tmp_f).st_size > 0
 
 
 def test_index_local_repo(db, local_repo):

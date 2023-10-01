@@ -35,6 +35,7 @@ INSTALLED_APPS = [
     "django.contrib.staticfiles",
     "bootstrap5",
     "indexer.apps.IndexerConfig",
+    "django_extensions",
 ]
 
 MIDDLEWARE = [
@@ -73,7 +74,7 @@ WSGI_APPLICATION = "crawler.wsgi.application"
 
 DATABASES = {
     "default": dj_database_url.config(
-        default="sqlite:///" + os.getcwd() + "/db/git-indexer.db",
+        default="postgres://@/sbc",
         conn_max_age=600,
         conn_health_checks=True,
     )

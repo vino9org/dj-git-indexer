@@ -21,6 +21,8 @@ google-cloud-storage = "^2.10.0"
 django-bootstrap-v5 = "^1.0.11"
 gunicorn = "^21.0.1"
 dj-database-url = "^2.0.0"
+psycopg2 = "^2.9.8"
+django-extensions = "^3.2.3"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]
@@ -56,7 +58,7 @@ profile = "black"
 [tool.pytest.ini_options]
 minversion = "6.0"
 addopts = "--reuse-db"
-DJANGO_SETTINGS_MODULE = "crawler.settings"
+DJANGO_SETTINGS_MODULE = "crawler.settings_test"
 testpaths = [
     "Indexer/tests",
 ]

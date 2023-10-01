@@ -1,6 +1,4 @@
 import csv
-import os
-import sqlite3
 import traceback
 from datetime import datetime
 
@@ -15,7 +13,7 @@ from .models import Author, Commit, CommittedFile, MergeRequest, ensure_reposito
 from .sql import QUERY_SQL, STATS_SQL
 from .utils import (
     display_url,
-    gitlab_timestamp_to_iso,
+    gitlab_ts_to_datetime,
     log,
     normalize_branches,
     redact_http_url,
@@ -75,7 +73,7 @@ def index_commits(clone_url: str, git_repo_type: str = "", show_progress: bool =
             if nn > 0 and nn % 200 == 0 and show_progress:
                 log(f"indexed {n_new_commits:5,} new commits and {n_branch_updates:5,} branch updates")
 
-        repo.last_indexed_at = datetime.now().astimezone().isoformat(timespec="seconds")
+        repo.last_indexed_at = datetime.now()
 
         if (n_new_commits + n_branch_updates) > 0:
             log(f"indexed {n_new_commits:5,} new commits and {n_branch_updates:5,} branch updates in the repository")
@@ -136,9 +134,9 @@ def index_gitlab_merge_requests(project: projects.Project, show_progress: bool =
                 target_branch=mr.target_branch,
                 source_sha=mr.sha,
                 merge_sha=merge_commit_sha,
-                created_at=gitlab_timestamp_to_iso(mr.created_at),
-                merged_at=gitlab_timestamp_to_iso(mr.merged_at),
-                updated_at=gitlab_timestamp_to_iso(mr.updated_at),
+                created_at=gitlab_ts_to_datetime(mr.created_at),
+                merged_at=gitlab_ts_to_datetime(mr.merged_at),
+                updated_at=gitlab_ts_to_datetime(mr.updated_at),
                 # first_comment_at = models.CharField(max_length=32)
                 is_merged=is_merged,
                 merged_by_username=merged_by_username,
@@ -197,9 +195,9 @@ def index_github_pull_requests(git_repo: Repository.Repository, show_progress: b
                 target_branch=pr.base.ref,
                 source_sha=pr.head.sha,  # does this value change when new commits are added to source branch?
                 merge_sha=pr.merge_commit_sha,
-                created_at=pr.created_at.astimezone().isoformat(timespec="seconds"),
-                merged_at=pr.merged_at.astimezone().isoformat(timespec="seconds"),
-                updated_at=pr.updated_at.astimezone().isoformat(timespec="seconds"),
+                created_at=pr.created_at.astimezone(),
+                merged_at=pr.merged_at.astimezone(),
+                updated_at=pr.updated_at.astimezone(),
                 # first_comment_at = models.CharField(max_length=32)
                 is_merged=pr.merged,
                 merged_by_username=pr.merged_by.login if pr.merged else None,
@@ -263,8 +261,7 @@ def _new_commit_(git_commit: PyDrillerCommit) -> Commit:
         # dmm_unit_size=git_commit.dmm_unit_size,
         # dmm_unit_complexity=git_commit.dmm_unit_complexity,
         # dmm_unit_interfacing=git_commit.dmm_unit_interfacing,
-        created_at=git_commit.committer_date.isoformat(timespec="seconds"),
-        created_ts=git_commit.committer_date,
+        created_at=git_commit.committer_date,
     )
     commit.save()
 
@@ -304,21 +301,3 @@ def export_all_data(csv_file: str) -> None:
             n_rows += 1
             writer.writerow(row)
         log(f"exported {n_rows} rows to {csv_file}")
-
-
-def export_db(dbf: str):
-    if "sqlite" not in connection._connections.settings[connection._alias]["ENGINE"]:  # type: ignore
-        log("not a sqlite database, not exporting")
-        return
-
-    # export database to file
-    # write to temp file first then rename to avoid potentially corrupting the database
-    tmp_file = dbf + ".new"
-    file_conn = sqlite3.connect(tmp_file)
-    connection.cursor().connection.backup(file_conn)
-    file_conn.close()
-
-    if dbf and os.path.exists(dbf):
-        os.unlink(dbf)
-    os.rename(tmp_file, dbf)
-    log(f"saved database to {dbf}")
