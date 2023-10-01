@@ -3,7 +3,12 @@ import os
 import pytest
 
 from indexer.models import Repository, RepositoryCommitLink
-from indexer.worker import export_db, index_commits, index_gitlab_merge_requests
+from indexer.worker import (
+    export_db,
+    index_commits,
+    index_github_pull_requests,
+    index_gitlab_merge_requests,
+)
 
 
 def test_index_github_repo(db, github_test_repo):
@@ -19,6 +24,11 @@ def test_index_gitlab_repo(db, gitlab_test_repo):
 def test_index_gitlab_merge_requests(db, gitlab, gitlab_test_repo):
     project = gitlab.projects.get(gitlab_test_repo)
     assert index_gitlab_merge_requests(project) > 0
+
+
+def test_index_github_pull_requests(db, github, github_test_repo):
+    repo = github.get_repo(github_test_repo)
+    assert index_github_pull_requests(repo) > 0
 
 
 def test_export_db(db, tmp_path):

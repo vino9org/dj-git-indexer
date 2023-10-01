@@ -15,7 +15,7 @@ from indexer.utils import (
 from indexer.worker import (
     export_all_data,
     index_commits,
-    index_github_merge_requests,
+    index_github_pull_requests,
     index_gitlab_merge_requests,
     update_commit_stats,
 )
@@ -112,7 +112,7 @@ class Command(BaseCommand):
                             if source == "gitlab":
                                 n_merge_quests += index_gitlab_merge_requests(project, show_progress=True)
                             elif source == "github":
-                                n_merge_quests += index_github_merge_requests(project, show_progress=True)
+                                n_merge_quests += index_github_pull_requests(project, show_progress=True)
                             else:
                                 print(f"don't know how to index merge_request for {source}")
                         else:

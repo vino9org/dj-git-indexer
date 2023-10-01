@@ -6,6 +6,7 @@ from datetime import datetime
 
 from django.db import DatabaseError, connection
 from git.exc import GitCommandError
+from github import Repository
 from gitlab.v4.objects import projects
 from pydriller import Repository as PyDrillerRepository
 from pydriller.domain.commit import Commit as PyDrillerCommit
@@ -165,7 +166,64 @@ def index_gitlab_merge_requests(project: projects.Project, show_progress: bool =
     return 0
 
 
-def index_github_merge_requests(project: projects.Project, show_progress: bool = False) -> int:
+def index_github_pull_requests(git_repo: Repository.Repository, show_progress: bool = False) -> int:
+    n_requests = 0
+    log_url = display_url(git_repo.clone_url)
+
+    try:
+        repo = ensure_repository(git_repo.clone_url, "github")
+        if repo is None:
+            log(f"### cannot create repostitory object for {log_url}")
+            return 0
+
+        if repo.is_active is False:
+            log(f"### skipping inactive repository {log_url}")
+            return 0
+
+        log(f"starting to index merge requests for {log_url}")
+
+        pull_requests = git_repo.get_pulls(state="closed")
+        for pr in pull_requests:
+            db_obj = MergeRequest.objects.filter(request_id=pr.number, repo=repo).first()
+            if db_obj is not None:
+                # merge request already indexed
+                continue
+
+            MergeRequest.objects.create(
+                repo=repo,
+                request_id=pr.number,
+                state=pr.state,
+                source_branch=pr.head.ref,
+                target_branch=pr.base.ref,
+                source_sha=pr.head.sha,  # does this value change when new commits are added to source branch?
+                merge_sha=pr.merge_commit_sha,
+                created_at=pr.created_at.astimezone().isoformat(timespec="seconds"),
+                merged_at=pr.merged_at.astimezone().isoformat(timespec="seconds"),
+                updated_at=pr.updated_at.astimezone().isoformat(timespec="seconds"),
+                # first_comment_at = models.CharField(max_length=32)
+                is_merged=pr.merged,
+                merged_by_username=pr.merged_by.login if pr.merged else None,
+            ).save()
+
+            n_requests += 1
+
+            if n_requests > 0 and n_requests % 50 == 0 and show_progress:
+                log(f"indexed {n_requests:3,} merge requests ")
+
+        if n_requests > 0:
+            log(f"indexed {n_requests:3,} merge requests in the repository")
+
+        return n_requests
+
+    except GitCommandError as e:
+        print(f"{e._cmdline} returned {e.stderr} for {log_url}")
+    except DatabaseError as e:
+        exc = traceback.format_exc()
+        print(f"DatabaseError indexing repository {log_url} => {str(e)}\n{exc}")
+    except Exception as e:  # pragma: no cover
+        exc = traceback.format_exc()
+        print(f"Exception indexing repository {log_url} => {str(e)}\n{exc}")
+
     return 0
 
 

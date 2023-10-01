@@ -9,6 +9,7 @@ import pytest
 from django.conf import settings
 from django.core.management import call_command
 from dotenv import find_dotenv, load_dotenv
+from github import Auth, Github
 from gitlab import Gitlab
 
 from indexer.models import MergeRequest
@@ -38,6 +39,15 @@ def gitlab():
         yield Gitlab("https://gitlab.com", private_token=private_token, per_page=100)
     else:
         yield None
+
+
+@pytest.fixture(scope="session")
+def github():
+    access_token = os.environ.get("GITHUB_TOKEN")
+    if access_token:
+        yield Github(auth=Auth.Token(access_token))
+    else:
+        yield Github()
 
 
 @pytest.fixture(scope="session")
