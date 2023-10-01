@@ -20,6 +20,7 @@ class Author(models.Model):
     company = models.CharField(max_length=64, null=True)
     team = models.CharField(max_length=64, null=True)
     author_group = models.CharField(max_length=64, null=True)
+    login_name = models.CharField(max_length=128, null=True)
 
     def __str__(self) -> str:
         return f"Author(id={self.id}, email={self.email}, real_email={self.real_email}"
