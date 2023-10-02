@@ -24,10 +24,20 @@ def test_index_gitlab_merge_requests(db, gitlab, gitlab_test_repo):
     project = gitlab.projects.get(gitlab_test_repo)
     assert index_gitlab_merge_requests(project) > 0
 
+    repo = Repository.objects.get(clone_url=project.http_url_to_repo, repo_type="gitlab")
+    assert repo is not None
+    mr = repo.merge_requests.filter(repo=repo, request_id="1").first()
+    assert mr.request_id == "1" and mr.state == "merged" and mr.target_branch == "main"
+
 
 def test_index_github_pull_requests(db, github, github_test_repo):
     repo = github.get_repo(github_test_repo)
     assert index_github_pull_requests(repo) > 0
+
+    repo = Repository.objects.get(clone_url=repo.clone_url, repo_type="github")
+    assert repo is not None
+    pr = repo.merge_requests.filter(repo=repo, request_id="1").first()
+    assert pr.request_id == "1" and pr.state == "closed" and pr.is_merged
 
 
 def test_index_local_repo(db, local_repo):

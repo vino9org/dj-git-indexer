@@ -1,4 +1,4 @@
-from crawler.settings import *  # noqa
+from .settings import *  # noqa
 
 DATABASES = {
     "default": {
