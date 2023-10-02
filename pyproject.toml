@@ -48,6 +48,7 @@ pre-commit = "^3.3.3"
 pytest-django = "^4.5.2"
 types-google-cloud-ndb = "^2.1.0.7"
 types-psutil = "^5.9.5.15"
+pytest-dotenv = "^0.5.2"
 
 [tool.black]
 line-length = 120
@@ -61,6 +62,9 @@ addopts = "--reuse-db"
 DJANGO_SETTINGS_MODULE = "crawler.settings_test"
 testpaths = [
     "Indexer/tests",
+]
+env_files = [
+    ".env.test",
 ]
 
 [tool.coverage.run]

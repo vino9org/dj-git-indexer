@@ -8,13 +8,10 @@ from datetime import datetime
 import pytest
 from django.conf import settings
 from django.core.management import call_command
-from dotenv import find_dotenv, load_dotenv
 from github import Auth, Github
 from gitlab import Gitlab
 
 from indexer.models import MergeRequest
-
-load_dotenv(find_dotenv(".env.test"))
 
 sys.path.insert(0, os.path.abspath(settings.BASE_DIR))
 
