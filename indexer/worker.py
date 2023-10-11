@@ -3,6 +3,7 @@ import traceback
 from datetime import datetime, timezone
 
 from django.db import DatabaseError, connection
+from django.utils.timezone import is_aware, make_aware
 from git.exc import GitCommandError
 from github import Repository
 from gitlab.v4.objects import projects
@@ -276,6 +277,11 @@ def _new_commit_(git_commit: PyDrillerCommit) -> Commit:
         author.real_email = author.email
         author.save()
 
+    if is_aware(git_commit.committer_date):
+        commit_dt = git_commit.committer_date
+    else:
+        commit_dt = make_aware(git_commit.committer_date)
+
     commit = Commit(
         sha=git_commit.hash,
         message=git_commit.msg[:2048],  # some commits has super long message, e.g. squash merge
@@ -290,7 +296,7 @@ def _new_commit_(git_commit: PyDrillerCommit) -> Commit:
         # dmm_unit_size=git_commit.dmm_unit_size,
         # dmm_unit_complexity=git_commit.dmm_unit_complexity,
         # dmm_unit_interfacing=git_commit.dmm_unit_interfacing,
-        created_at=git_commit.committer_date,
+        created_at=commit_dt,
     )
     commit.save()
 
