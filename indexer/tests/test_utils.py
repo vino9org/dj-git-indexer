@@ -158,3 +158,4 @@ def test_gitlab_ts_to_datetime():
     assert gitlab_ts_to_datetime(None) is None
     dt = gitlab_ts_to_datetime("2021-08-31T09:00:00.000Z")
     assert (dt.year, dt.month, dt.second) == (2021, 8, 0)
+    assert dt.tzinfo.tzname(dt) == "UTC"

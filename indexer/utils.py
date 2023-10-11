@@ -3,7 +3,7 @@ import os
 import re
 import sys
 import warnings
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Any, Iterator, List, Optional, Tuple
 
 import gitlab
@@ -187,7 +187,11 @@ def redact_http_url(url: str) -> str:
 
 
 def gitlab_ts_to_datetime(ts: None | str) -> None | datetime:
+    """
+    gitlab api returns timestamp is string format in UTC
+    convert it to timezone aware datetime object
+    """
     if ts is None:
         return None
     else:
-        return datetime.strptime(ts, "%Y-%m-%dT%H:%M:%S.%f%z")
+        return datetime.strptime(ts, "%Y-%m-%dT%H:%M:%S.%fz").replace(tzinfo=timezone.utc)
