@@ -1,6 +1,6 @@
 import csv
 import traceback
-from datetime import datetime
+from datetime import datetime, timezone
 
 from django.db import DatabaseError, connection
 from git.exc import GitCommandError
@@ -22,8 +22,21 @@ from .utils import (
 
 GITLAB_TIMETSAMP_FORMAT = "%Y-%m-%dT%H:%M:%S.%fZ"
 
+#
+# notes about timezone handling
+#
+#  1. USE_TZ is set to True, which means DateTime field in models are required to have a tzinfo component
+#  2. For uniformity, we use timezone.utc for all datetime objects, which means some conversion is needed here
+#  3. Github APIs returns native datetime object and the timezone is assumed to be in UTC
+#  4. Gitlab APIs returns timetime as stringm with "Z" at the end, also in UTC
+#  5. In model Repository, last_commit_at value is from Commit object, which is a tz aware datetime object
+#     (need to validate accuracy here?). The last_indexed_at created in this module, UTC is used.
+#
 
-def index_commits(clone_url: str, git_repo_type: str = "", show_progress: bool = False, timeout: int = 28800) -> int:
+
+def index_commits(
+    clone_url: str, git_repo_type: str = "", show_progress: bool = False, index_all: bool = False, timeout: int = 28800
+) -> int:
     n_branch_updates, n_new_commits = 0, 0
     log_url = display_url(redact_http_url(clone_url))
 
@@ -45,7 +58,17 @@ def index_commits(clone_url: str, git_repo_type: str = "", show_progress: bool =
         for commit in repo.commits.all():
             old_commits[commit.sha] = commit
 
-        for git_commit in PyDrillerRepository(clone_url, include_refs=True, include_remotes=True).traverse_commits():
+        if repo.last_commit_at and not index_all:
+            index_since = repo.last_commit_at
+        else:
+            index_since = datetime.min
+
+        for git_commit in PyDrillerRepository(
+            clone_url,
+            include_refs=True,
+            include_remotes=True,
+            since=index_since,
+        ).traverse_commits():
             # impose some timeout to avoid spending tons of time on very large repositories
             if (datetime.now() - start_t).seconds > timeout:  # pragma: no cover
                 print(f"### indexing not done after {timeout} seconds, aborting {log_url}")
@@ -67,16 +90,21 @@ def index_commits(clone_url: str, git_repo_type: str = "", show_progress: bool =
                 except Commit.DoesNotExist:
                     commit = _new_commit_(git_commit)
                 repo.commits.add(commit)
+
+                if repo.last_commit_at is None or (commit.created_at and commit.created_at > repo.last_commit_at):
+                    repo.last_commit_at = commit.created_at
+
                 n_new_commits += 1
 
             nn = n_new_commits + n_branch_updates
             if nn > 0 and nn % 200 == 0 and show_progress:
                 log(f"indexed {n_new_commits:5,} new commits and {n_branch_updates:5,} branch updates")
 
-        repo.last_indexed_at = datetime.now()
-
         if (n_new_commits + n_branch_updates) > 0:
             log(f"indexed {n_new_commits:5,} new commits and {n_branch_updates:5,} branch updates in the repository")
+
+        repo.last_indexed_at = datetime.utcnow().replace(tzinfo=timezone.utc)
+        repo.save()
 
         return n_new_commits + n_branch_updates
 
@@ -187,6 +215,7 @@ def index_github_pull_requests(git_repo: Repository.Repository, show_progress: b
                 # merge request already indexed
                 continue
 
+            # TODO: pr.created_at is a naive datetime object, timezone is assumed to be UTC
             MergeRequest.objects.create(
                 repo=repo,
                 request_id=pr.number,
@@ -195,10 +224,10 @@ def index_github_pull_requests(git_repo: Repository.Repository, show_progress: b
                 target_branch=pr.base.ref,
                 source_sha=pr.head.sha,  # does this value change when new commits are added to source branch?
                 merge_sha=pr.merge_commit_sha,
-                created_at=pr.created_at.astimezone(),
-                merged_at=pr.merged_at.astimezone(),
-                updated_at=pr.updated_at.astimezone(),
-                # first_comment_at = models.CharField(max_length=32)
+                created_at=pr.created_at.replace(tzinfo=timezone.utc),
+                merged_at=pr.merged_at.replace(tzinfo=timezone.utc),
+                updated_at=pr.updated_at.replace(tzinfo=timezone.utc),
+                # first_comment_at = ???
                 is_merged=pr.merged,
                 merged_by_username=pr.merged_by.login if pr.merged else None,
             ).save()

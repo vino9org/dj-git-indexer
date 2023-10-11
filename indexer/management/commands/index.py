@@ -45,6 +45,11 @@ class Command(BaseCommand):
             default=False,
         )
         parser.add_argument(
+            "--index_all_commits",
+            action="store_true",
+            default=False,
+        )
+        parser.add_argument(
             "--filter",
             dest="filter",
             required=False,
@@ -116,7 +121,9 @@ class Command(BaseCommand):
                             else:
                                 print(f"don't know how to index merge_request for {source}")
                         else:
-                            n_commits += index_commits(repo_url, source, show_progress=True)
+                            n_commits += index_commits(
+                                repo_url, source, show_progress=True, index_all=options["index_all_commits"]
+                            )
                         n_repos += 1
 
         if n_commits or query == "_stats_":
