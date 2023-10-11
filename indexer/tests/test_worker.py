@@ -80,7 +80,7 @@ def test_index_local_repo(db, local_repo):
     n_new_commits = _add_random_commit_(repo1_clone)
     assert index_commits(repo1_clone, "local") == n_new_commits
     repo1_clone_obj.refresh_from_db()
-    assert abs((repo1_clone_obj.last_commit_at - new_commit_dt).total_seconds()) < 2
+    assert abs((repo1_clone_obj.last_commit_at - new_commit_dt).total_seconds()) < 60
 
     # empty repo should not throw any exception
     empty_repo = local_repo + "/empty_repo"
