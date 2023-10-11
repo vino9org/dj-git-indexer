@@ -74,7 +74,7 @@ WSGI_APPLICATION = "crawler.wsgi.application"
 
 DATABASES = {
     "default": dj_database_url.config(
-        default="postgres://@/sbc",
+        default=os.getenv("DATABASE_URL") or "postgres://@/gitdb",
         conn_max_age=600,
         conn_health_checks=True,
     )
