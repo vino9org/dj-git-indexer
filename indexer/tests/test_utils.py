@@ -95,9 +95,8 @@ def test_enumerate_local_repos(local_repo):
 
 
 @pytest.mark.skipif(os.environ.get("GITLAB_TOKEN") is None, reason="gitlab token not available")
-def test_enumerate_gitlab_repos(gitlab_test_repo):
-    query = gitlab_test_repo.split("/")[1]
-    repos = list(enumerate_gitlab_repos(query))
+def test_enumerate_gitlab_repos():
+    repos = list(enumerate_gitlab_repos("hello-api"))
     assert len(repos) > 0
     assert list(repos)[0][1].visibility is not None
 

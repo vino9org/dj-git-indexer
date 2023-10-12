@@ -89,8 +89,8 @@ def enumerate_gitlab_repos(
             print("GITLAB_TOKEN environment variable not set")
             sys.exit(1)
 
-    gl = gitlab.Gitlab(url, private_token=private_token, per_page=100)
-    for project in gl.search(scope="projects", search=query):
+    gl = gitlab.Gitlab(url, private_token=private_token, per_page=20)
+    for project in gl.search(scope="projects", search=query, iterator=True):
         repo = gl.projects.get(project["id"])
         clone_url = repo.http_url_to_repo
         if repo.visibility == "private":
