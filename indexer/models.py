@@ -193,9 +193,9 @@ class MergeRequest(models.Model):
     title = models.CharField(max_length=1024)
     state = models.CharField(max_length=32)
 
-    source_sha = models.CharField(max_length=256, default="")
+    source_sha = models.CharField(max_length=256, null=True)
     source_branch = models.CharField(max_length=256, default="")
-    target_branch = models.CharField(max_length=256, null=True, default="")
+    target_branch = models.CharField(max_length=256, null=True)
     merge_sha = models.CharField(max_length=256, null=True, default="")
 
     created_at = models.DateTimeField(null=True)
