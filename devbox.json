@@ -8,9 +8,9 @@
       "poetry install"
     ],
     "scripts": {
-      "idx": "poetry run python manage.py index --source gitlab --query 'securitybankph/' --filter '*' --export-csv db/all_commit_data.csv",
-      "ipr": "poetry run python manage.py index --source gitlab --query 'securitybankph/' --filter '*' --merge_requests_only",
-      "app": "poetry run python manage.py runserver",
+      "idx": "poetry run python -u manage.py index --source gitlab --query 'securitybankph/' --filter '*' --export-csv db/all_commit_data.csv",
+      "ipr": "poetry run python -u manage.py index --source gitlab --query 'securitybankph/' --filter '*' --merge_requests_only",
+      "app": "poetry run python -u manage.py runserver",
       "test": "poetry run pytest -v --cov=. --cov-report=html"
     }
   }
