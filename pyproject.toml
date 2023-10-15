@@ -8,7 +8,7 @@ license = "MIT"
 # this section contains all dependencies required to run unit and integration tests
 # not just dependencies requied for lambda runtime
 [tool.poetry.dependencies]
-python = "^3.10"
+python = "^3.11"
 python-dotenv = "^1.0.0"
 django = "^4.2.3"
 django-stubs = {extras = ["compatible-mypy"], version = "^4.2.3"}
