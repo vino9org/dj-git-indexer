@@ -22,6 +22,29 @@ rotate_log()
     fi
 }
 
+run_index()
+{
+    mode=$1
+
+    if [ "$mode" -eq "commit" ]; then
+        echo "Login to Gitlab"
+        pushd ../gitlab_login_bot
+        poetry run python -u gitlab_login.py
+        popd
+
+        echo "Indexing commits"
+        $BASE_COMMAND  --export-csv db/all_commit_data.csv
+
+    elif [ "$mode" -eq "merge" ]; then
+        echo "Indexing merge requests"
+        $BASE_COMMAND  --merge_requests_only
+
+    else
+        echo unknown mode $mode
+    fi
+}
+
+BASE_COMMAND="echo poetry run python -u manage.py index --source gitlab --query 'securitybankph/' --filter '*' "
 RELPATH="$(dirname "$0")"/..
 WORK_DIR="$(realpath $RELPATH)"
 # echo WORK_DIR is $WORK_DIR
@@ -30,7 +53,6 @@ cd $WORK_DIR
 
 rotate_log logs/cron.log 3
 
-BASE_COMMAND="poetry run python -u manage.py index --source gitlab --query 'securitybankph/' --filter '*' "
 
 case $2 in
     idx)
