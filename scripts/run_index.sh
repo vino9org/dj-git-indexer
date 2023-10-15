@@ -30,16 +30,17 @@ cd $WORK_DIR
 
 rotate_log logs/cron.log 3
 
+BASE_COMMAND="poetry run python -u manage.py index --source gitlab --query 'securitybankph/' --filter '*' "
+
 case $2 in
     idx)
-        devbox run idx > logs/cron.log 2>&1
+        $BASE_COMMAND --export-csv db/all_commit_data.csv
         ;;
     ipr)
-        devbox run ipr >> logs/cron.log 2>&1
+        $BASE_COMMAND --merge_requests_only
         ;;
     *)
-        devbox run idx > logs/cron.log 2>&1
-        devbox run ipr >> logs/cron.log 2>&1
+        $BASE_COMMAND --export-csv db/all_commit_data.csv
+        $BASE_COMMAND --merge_requests_only
         ;;
 esac
-
