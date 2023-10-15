@@ -26,7 +26,7 @@ run_index()
 {
     mode=$1
 
-    if [ "$mode" -eq "commit" ]; then
+    if [ "$mode" = "commit" ]; then
         echo "Login to Gitlab"
         pushd ../gitlab_login_bot
         poetry run python -u gitlab_login.py
@@ -35,7 +35,7 @@ run_index()
         echo "Indexing commits"
         $BASE_COMMAND  --export-csv db/all_commit_data.csv
 
-    elif [ "$mode" -eq "merge" ]; then
+    elif [ "$mode" = "mr" ]; then
         echo "Indexing merge requests"
         $BASE_COMMAND  --merge_requests_only
 
@@ -44,7 +44,7 @@ run_index()
     fi
 }
 
-BASE_COMMAND="echo poetry run python -u manage.py index --source gitlab --query 'securitybankph/' --filter '*' "
+BASE_COMMAND="poetry run python -u manage.py index --source gitlab --query 'securitybankph/' --filter '*' "
 RELPATH="$(dirname "$0")"/..
 WORK_DIR="$(realpath $RELPATH)"
 # echo WORK_DIR is $WORK_DIR
@@ -56,13 +56,13 @@ rotate_log logs/cron.log 3
 
 case $2 in
     idx)
-        $BASE_COMMAND --export-csv db/all_commit_data.csv
+        run_index commit
         ;;
     ipr)
-        $BASE_COMMAND --merge_requests_only
+        run_index mr
         ;;
     *)
-        $BASE_COMMAND --export-csv db/all_commit_data.csv
-        $BASE_COMMAND --merge_requests_only
+        run_index commit
+        run_index mr
         ;;
 esac
