@@ -1,8 +1,0 @@
-# m h  dom mon dow   command
-
-# At minute 30 past hour 2 and every 4th hour from 11 through 21 on
-# every day-of-week from Monday through Friday. that is:
-# 2:30 11:30, 15:30, 19:30
-
-30 2,11-21/4 * * 1-5 /bin/bash /home/pi/vino9org/dj-git-indexer/scripts/run_index.sh
-
