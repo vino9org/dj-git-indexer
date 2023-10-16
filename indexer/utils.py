@@ -3,7 +3,7 @@ import os
 import re
 import sys
 import warnings
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Any, Iterator, List, Optional, Tuple
 
 import gitlab
@@ -89,8 +89,8 @@ def enumerate_gitlab_repos(
             print("GITLAB_TOKEN environment variable not set")
             sys.exit(1)
 
-    gl = gitlab.Gitlab(url, private_token=private_token, per_page=100)
-    for project in gl.search(scope="projects", search=query):
+    gl = gitlab.Gitlab(url, private_token=private_token, per_page=20)
+    for project in gl.search(scope="projects", search=query, iterator=True):
         repo = gl.projects.get(project["id"])
         clone_url = repo.http_url_to_repo
         if repo.visibility == "private":
@@ -186,8 +186,12 @@ def redact_http_url(url: str) -> str:
     return re.sub(r"(?<=://)[^/]*@", "", url)
 
 
-def gitlab_timestamp_to_iso(ts: str) -> None | str:
+def gitlab_ts_to_datetime(ts: None | str) -> None | datetime:
+    """
+    gitlab api returns timestamp is string format in UTC
+    convert it to timezone aware datetime object
+    """
     if ts is None:
         return None
     else:
-        return datetime.strptime(ts, "%Y-%m-%dT%H:%M:%S.%f%z").astimezone().isoformat(timespec="seconds")
+        return datetime.strptime(ts, "%Y-%m-%dT%H:%M:%S.%fz").replace(tzinfo=timezone.utc)

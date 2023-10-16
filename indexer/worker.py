@@ -1,10 +1,9 @@
 import csv
-import os
-import sqlite3
 import traceback
-from datetime import datetime
+from datetime import datetime, timezone
 
 from django.db import DatabaseError, connection
+from django.utils.timezone import is_aware, make_aware
 from git.exc import GitCommandError
 from github import Repository
 from gitlab.v4.objects import projects
@@ -15,7 +14,7 @@ from .models import Author, Commit, CommittedFile, MergeRequest, ensure_reposito
 from .sql import QUERY_SQL, STATS_SQL
 from .utils import (
     display_url,
-    gitlab_timestamp_to_iso,
+    gitlab_ts_to_datetime,
     log,
     normalize_branches,
     redact_http_url,
@@ -24,8 +23,21 @@ from .utils import (
 
 GITLAB_TIMETSAMP_FORMAT = "%Y-%m-%dT%H:%M:%S.%fZ"
 
+#
+# notes about timezone handling
+#
+#  1. USE_TZ is set to True, which means DateTime field in models are required to have a tzinfo component
+#  2. For uniformity, we use timezone.utc for all datetime objects, which means some conversion is needed here
+#  3. Github APIs returns native datetime object and the timezone is assumed to be in UTC
+#  4. Gitlab APIs returns timetime as stringm with "Z" at the end, also in UTC
+#  5. In model Repository, last_commit_at value is from Commit object, which is a tz aware datetime object
+#     (need to validate accuracy here?). The last_indexed_at created in this module, UTC is used.
+#
 
-def index_commits(clone_url: str, git_repo_type: str = "", show_progress: bool = False, timeout: int = 28800) -> int:
+
+def index_commits(
+    clone_url: str, git_repo_type: str = "", show_progress: bool = False, index_all: bool = False, timeout: int = 28800
+) -> int:
     n_branch_updates, n_new_commits = 0, 0
     log_url = display_url(redact_http_url(clone_url))
 
@@ -47,7 +59,17 @@ def index_commits(clone_url: str, git_repo_type: str = "", show_progress: bool =
         for commit in repo.commits.all():
             old_commits[commit.sha] = commit
 
-        for git_commit in PyDrillerRepository(clone_url, include_refs=True, include_remotes=True).traverse_commits():
+        if repo.last_commit_at and not index_all:
+            index_since = repo.last_commit_at
+        else:
+            index_since = datetime.min
+
+        for git_commit in PyDrillerRepository(
+            clone_url,
+            include_refs=True,
+            include_remotes=True,
+            since=index_since,
+        ).traverse_commits():
             # impose some timeout to avoid spending tons of time on very large repositories
             if (datetime.now() - start_t).seconds > timeout:  # pragma: no cover
                 print(f"### indexing not done after {timeout} seconds, aborting {log_url}")
@@ -69,16 +91,21 @@ def index_commits(clone_url: str, git_repo_type: str = "", show_progress: bool =
                 except Commit.DoesNotExist:
                     commit = _new_commit_(git_commit)
                 repo.commits.add(commit)
+
+                if repo.last_commit_at is None or (commit.created_at and commit.created_at > repo.last_commit_at):
+                    repo.last_commit_at = commit.created_at
+
                 n_new_commits += 1
 
             nn = n_new_commits + n_branch_updates
             if nn > 0 and nn % 200 == 0 and show_progress:
                 log(f"indexed {n_new_commits:5,} new commits and {n_branch_updates:5,} branch updates")
 
-        repo.last_indexed_at = datetime.now().astimezone().isoformat(timespec="seconds")
-
         if (n_new_commits + n_branch_updates) > 0:
             log(f"indexed {n_new_commits:5,} new commits and {n_branch_updates:5,} branch updates in the repository")
+
+        repo.last_indexed_at = datetime.utcnow().replace(tzinfo=timezone.utc)
+        repo.save()
 
         return n_new_commits + n_branch_updates
 
@@ -136,9 +163,9 @@ def index_gitlab_merge_requests(project: projects.Project, show_progress: bool =
                 target_branch=mr.target_branch,
                 source_sha=mr.sha,
                 merge_sha=merge_commit_sha,
-                created_at=gitlab_timestamp_to_iso(mr.created_at),
-                merged_at=gitlab_timestamp_to_iso(mr.merged_at),
-                updated_at=gitlab_timestamp_to_iso(mr.updated_at),
+                created_at=gitlab_ts_to_datetime(mr.created_at),
+                merged_at=gitlab_ts_to_datetime(mr.merged_at),
+                updated_at=gitlab_ts_to_datetime(mr.updated_at),
                 # first_comment_at = models.CharField(max_length=32)
                 is_merged=is_merged,
                 merged_by_username=merged_by_username,
@@ -189,6 +216,7 @@ def index_github_pull_requests(git_repo: Repository.Repository, show_progress: b
                 # merge request already indexed
                 continue
 
+            # TODO: pr.created_at is a naive datetime object, timezone is assumed to be UTC
             MergeRequest.objects.create(
                 repo=repo,
                 request_id=pr.number,
@@ -197,10 +225,10 @@ def index_github_pull_requests(git_repo: Repository.Repository, show_progress: b
                 target_branch=pr.base.ref,
                 source_sha=pr.head.sha,  # does this value change when new commits are added to source branch?
                 merge_sha=pr.merge_commit_sha,
-                created_at=pr.created_at.astimezone().isoformat(timespec="seconds"),
-                merged_at=pr.merged_at.astimezone().isoformat(timespec="seconds"),
-                updated_at=pr.updated_at.astimezone().isoformat(timespec="seconds"),
-                # first_comment_at = models.CharField(max_length=32)
+                created_at=pr.created_at.replace(tzinfo=timezone.utc),
+                merged_at=pr.merged_at.replace(tzinfo=timezone.utc),
+                updated_at=pr.updated_at.replace(tzinfo=timezone.utc),
+                # first_comment_at = ???
                 is_merged=pr.merged,
                 merged_by_username=pr.merged_by.login if pr.merged else None,
             ).save()
@@ -249,6 +277,11 @@ def _new_commit_(git_commit: PyDrillerCommit) -> Commit:
         author.real_email = author.email
         author.save()
 
+    if is_aware(git_commit.committer_date):
+        commit_dt = git_commit.committer_date
+    else:
+        commit_dt = make_aware(git_commit.committer_date)
+
     commit = Commit(
         sha=git_commit.hash,
         message=git_commit.msg[:2048],  # some commits has super long message, e.g. squash merge
@@ -263,8 +296,7 @@ def _new_commit_(git_commit: PyDrillerCommit) -> Commit:
         # dmm_unit_size=git_commit.dmm_unit_size,
         # dmm_unit_complexity=git_commit.dmm_unit_complexity,
         # dmm_unit_interfacing=git_commit.dmm_unit_interfacing,
-        created_at=git_commit.committer_date.isoformat(timespec="seconds"),
-        created_ts=git_commit.committer_date,
+        created_at=commit_dt,
     )
     commit.save()
 
@@ -304,21 +336,3 @@ def export_all_data(csv_file: str) -> None:
             n_rows += 1
             writer.writerow(row)
         log(f"exported {n_rows} rows to {csv_file}")
-
-
-def export_db(dbf: str):
-    if "sqlite" not in connection._connections.settings[connection._alias]["ENGINE"]:  # type: ignore
-        log("not a sqlite database, not exporting")
-        return
-
-    # export database to file
-    # write to temp file first then rename to avoid potentially corrupting the database
-    tmp_file = dbf + ".new"
-    file_conn = sqlite3.connect(tmp_file)
-    connection.cursor().connection.backup(file_conn)
-    file_conn.close()
-
-    if dbf and os.path.exists(dbf):
-        os.unlink(dbf)
-    os.rename(tmp_file, dbf)
-    log(f"saved database to {dbf}")

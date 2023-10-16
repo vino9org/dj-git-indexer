@@ -6,7 +6,7 @@ from django_stubs_ext.db.models import TypedModelMeta
 
 from indexer.utils import redact_http_url
 
-_REPO_TYPES_ = ["gitlab", "gitlab_private", "github", "bitbucket", "bitbucket_private", "local", "other"]
+_REPO_TYPES_ = ["gitlab", "gitlab_private", "github", "local", "other"]
 
 
 class Author(models.Model):
@@ -37,8 +37,8 @@ class Repository(models.Model):
     component = models.CharField(max_length=64, null=True)
     clone_url = models.CharField(max_length=256)
     is_active = models.BooleanField(default=True)
-    last_indexed_at = models.CharField(max_length=32, null=True)
-    last_commit_at = models.CharField(max_length=32, null=True)
+    last_indexed_at = models.DateTimeField(null=True)
+    last_commit_at = models.DateTimeField(null=True)
 
     # relationships
     commits = models.ManyToManyField(
@@ -71,8 +71,6 @@ class Repository(models.Model):
                     self.repo_type = "gitlab"
                 elif "github.com" in self.clone_url:
                     self.repo_type = "github"
-                elif "bitbucket.com" in self.clone_url:
-                    self.repo_type = "bitbucket"
             else:
                 self.repo_type = "local"
 
@@ -93,8 +91,6 @@ class Repository(models.Model):
             return f"{self.browse_url}/commit"
         elif self.repo_type.startswith("gitlab"):
             return f"{self.browse_url}/-/commit"
-        elif self.repo_type.startswith("bitbucket"):
-            return f"{self.browse_url}/commits"
         else:
             return ""
 
@@ -109,8 +105,7 @@ class Commit(models.Model):
     sha = models.CharField(max_length=40, primary_key=True)
     branches = models.CharField(max_length=1024, default="")
     message = models.CharField(max_length=2048, default="")
-    created_at = models.CharField(max_length=32)
-    created_ts = models.DateTimeField(null=True)
+    created_at = models.DateTimeField(null=True)
 
     # metrics by pydriller
     is_merge = models.BooleanField(default=False)
@@ -198,15 +193,15 @@ class MergeRequest(models.Model):
     title = models.CharField(max_length=1024)
     state = models.CharField(max_length=32)
 
-    source_sha = models.CharField(max_length=256, default="")
+    source_sha = models.CharField(max_length=256, null=True)
     source_branch = models.CharField(max_length=256, default="")
-    target_branch = models.CharField(max_length=256, null=True, default="")
+    target_branch = models.CharField(max_length=256, null=True)
     merge_sha = models.CharField(max_length=256, null=True, default="")
 
-    created_at = models.CharField(max_length=32)
-    merged_at = models.CharField(max_length=32, null=True)
-    updated_at = models.CharField(max_length=32, null=True)
-    first_comment_at = models.CharField(max_length=32, null=True)
+    created_at = models.DateTimeField(null=True)
+    merged_at = models.DateTimeField(null=True)
+    updated_at = models.DateTimeField(null=True)
+    first_comment_at = models.DateTimeField(null=True)
 
     is_merged = models.BooleanField(default=False)
     merged_by_username = models.CharField(max_length=32, null=True)

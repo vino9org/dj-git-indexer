@@ -54,7 +54,6 @@ STATS_SQL = [
             authors.author_group,
             commits.sha,
             commits.created_at as commit_date,
-            commits.created_ts as commit_date_ts,
             case commits.is_merge when true then 1 else 0 end as is_merge,
             commits.n_lines as commit_n_lines,
             commits.n_files as commit_n_files,

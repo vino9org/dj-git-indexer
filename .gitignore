@@ -32,3 +32,6 @@ db/**
 # misc test files
 t
 repo.lst
+
+# log files
+logs/*

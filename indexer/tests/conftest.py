@@ -3,18 +3,15 @@ import shutil
 import sys
 import tempfile
 import zipfile
-from datetime import datetime
+from datetime import datetime, timezone
 
 import pytest
 from django.conf import settings
 from django.core.management import call_command
-from dotenv import find_dotenv, load_dotenv
 from github import Auth, Github
 from gitlab import Gitlab
 
 from indexer.models import MergeRequest
-
-load_dotenv(find_dotenv(".env.test"))
 
 sys.path.insert(0, os.path.abspath(settings.BASE_DIR))
 
@@ -77,7 +74,7 @@ def seed_data():
 
     me, _ = Author.objects.get_or_create(name="me", email="mini@me", real_name="me", real_email="mini@me")
 
-    now = datetime.now().isoformat(timespec="seconds")
+    now = datetime.now().replace(tzinfo=timezone.utc)
     commit1, _ = Commit.objects.get_or_create(sha="feb3a2837630c0e51447fc1d7e68d86f964a8440", author=me, created_at=now)
     commit2, _ = Commit.objects.get_or_create(sha="ee474544052762d314756bb7439d6dab73221d3d", author=me, created_at=now)
     commit3, _ = Commit.objects.get_or_create(sha="e2c8b79813b95c93e5b06c5a82e4c417d5020762", author=me, created_at=now)
