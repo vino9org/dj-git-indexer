@@ -3,6 +3,7 @@ import os
 import pytest
 
 from indexer.utils import (
+    clone_url2mirror_path,
     display_url,
     enumerate_github_repos,
     enumerate_gitlab_repos,
@@ -158,3 +159,20 @@ def test_gitlab_ts_to_datetime():
     dt = gitlab_ts_to_datetime("2021-08-31T09:00:00.000Z")
     assert (dt.year, dt.month, dt.second) == (2021, 8, 0)
     assert dt.tzinfo.tzname(dt) == "UTC"
+
+
+def test_clone_url2mirror_path():
+    assert ("/parent_dir/company/project", "repo.git") == clone_url2mirror_path(
+        "https://user:pass@gitlab.com/company/project/repo.git", "/parent_dir"
+    )
+
+    assert ("/parent_dir/project", "repo.git") == clone_url2mirror_path(
+        "https://github.com/project/repo.git", "/parent_dir"
+    )
+
+    assert ("/parent_dir/company/project", "repo.git") == clone_url2mirror_path(
+        "git@server.net:company/project/repo.git", "/parent_dir"
+    )
+
+    with pytest.raises(ValueError):
+        clone_url2mirror_path("ssl://whatever.company/project/repo.git", "/parent_dir")

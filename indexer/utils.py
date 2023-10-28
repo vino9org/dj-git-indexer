@@ -195,3 +195,22 @@ def gitlab_ts_to_datetime(ts: None | str) -> None | datetime:
         return None
     else:
         return datetime.strptime(ts, "%Y-%m-%dT%H:%M:%S.%fz").replace(tzinfo=timezone.utc)
+
+
+def clone_url2mirror_path(clone_url: str, dest_path: str) -> tuple[str, str]:
+    """
+    convert clone url to a path to be used for local mirror
+    """
+    if clone_url.startswith("http"):
+        # returns the namespace/project/repo in https://user:pass@somethig.com/namespace/project/repo
+        path = "/".join(clone_url.split("/")[3:])
+    elif clone_url.startswith("git@"):
+        # returns the namespace/project/repo in git@somethig.com:namespace/project/repo
+        path = clone_url.split(":")[1]
+    else:
+        raise ValueError(f"invalid clone url {clone_url}")
+
+    parent_path = os.path.abspath(os.path.expanduser(dest_path)) + "/" + os.path.dirname(path)
+    repo_dir = os.path.basename(path)
+
+    return parent_path, repo_dir
