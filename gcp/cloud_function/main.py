@@ -66,7 +66,6 @@ def load_csv_to_bigquery(data, context):
             SchemaField(name="repo_type", field_type="STRING", mode="NULLABLE"),
             SchemaField(name="component", field_type="STRING", mode="NULLABLE"),
             SchemaField(name="clone_url", field_type="STRING", mode="REQUIRED"),
-            SchemaField(name="browse_url", field_type="STRING", mode="NULLABLE"),
             SchemaField(name="repo_id", field_type="INTEGER", mode="REQUIRED"),
             SchemaField(name="repo_inlude_in_stats", field_type="BOOLEAN", mode="REQUIRED"),
             SchemaField(name="last_indexed_at", field_type="TIMESTAMP", mode="NULLABLE"),

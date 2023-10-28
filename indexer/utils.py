@@ -1,12 +1,10 @@
 import fnmatch
 import os
 import re
-import socket
 import sys
 import warnings
-from datetime import datetime
-from typing import Iterator, List, Optional
-from urllib.parse import urlparse
+from datetime import datetime, timezone
+from typing import Any, Iterator, List, Optional, Tuple
 
 import gitlab
 import psutil
@@ -60,18 +58,6 @@ def match_any(path: str, patterns: str) -> bool:
     return any(fnmatch.fnmatch(path, pattern) for pattern in patterns.split(","))
 
 
-def clone_to_browse_url(clone_url: str) -> str:
-    """convert ssh based clone url to https based url"""
-    url = urlparse(clone_url)
-    http_url = ""
-    if url.scheme in ["http", "https"]:
-        http_url = clone_url
-    elif url.scheme in ["ssh", "ssh+git"] or (url.scheme == "" and url.path.startswith("git@")):
-        host, path = re.sub(r"^git@", "", url.path).split(":")
-        http_url = f"https://{host}/{path}"
-    return re.sub(r"\.git$", "", http_url)
-
-
 def should_exclude_from_stats(path: str) -> bool:
     """
     return true if the path should be ignore
@@ -83,7 +69,7 @@ def should_exclude_from_stats(path: str) -> bool:
     return False
 
 
-def enumerate_local_repos(base_dir: str) -> Iterator[str]:
+def enumerate_local_repos(base_dir: str) -> Iterator[Tuple[str, Any]]:
     for root, dirs, _ in os.walk(os.path.expanduser(base_dir), topdown=True):
         if ".git" in dirs:
             dirs.remove(".git")
@@ -91,32 +77,40 @@ def enumerate_local_repos(base_dir: str) -> Iterator[str]:
         for dd in dirs:
             abs_path = os.path.abspath(root + "/" + dd)
             if is_git_repo(abs_path):
-                yield abs_path
+                yield abs_path, None
 
 
 def enumerate_gitlab_repos(
     query: str, private_token: Optional[str] = None, url: str = "https://gitlab.com"
-) -> Iterator[str]:
+) -> Iterator[Tuple[str, Any]]:
     if private_token is None:
         private_token = os.environ.get("GITLAB_TOKEN")
         if not private_token:
             print("GITLAB_TOKEN environment variable not set")
             sys.exit(1)
 
-    gl = gitlab.Gitlab(url, private_token=private_token, per_page=100)
-    for project in gl.search(scope="projects", search=query, get_all=True):
-        clone_url = project["ssh_url_to_repo"]
-        yield clone_url
+    gl = gitlab.Gitlab(url, private_token=private_token, per_page=20)
+    for project in gl.search(scope="projects", search=query, iterator=True):
+        repo = gl.projects.get(project["id"])
+        clone_url = repo.http_url_to_repo
+        if repo.visibility == "private":
+            clone_url = clone_url.replace("://", f"://oauth2:{private_token}@")
+        yield clone_url, repo
 
 
-def enumerate_github_repos(query: str, access_token: Optional[str] = None, useHttpUrl: bool = False) -> Iterator[str]:
+def enumerate_github_repos(
+    query: str, access_token: Optional[str] = None, useHttpUrl: bool = False
+) -> Iterator[Tuple[str, Any]]:
     if access_token is None:
         access_token = os.environ.get("GITHUB_TOKEN")
 
     try:
         gh = Github(auth=Auth.Token(access_token)) if access_token else Github()
-        for rep in gh.search_repositories(query=query):
-            yield rep.ssh_url
+        for repo in gh.search_repositories(query=query):
+            clone_url = repo.clone_url
+            if repo.private:
+                clone_url = clone_url.replace("://", f"://{access_token}:@")
+            yield clone_url, repo
     except BadCredentialsException as e:
         print(f"authentication error => {e}")
     except Exception as e:
@@ -188,9 +182,35 @@ def normalize_branches(branches: List[str]) -> str:
     return ",".join(keys)[:1024]
 
 
-def patch_ssh_gitlab_url(clone_url: str) -> str:
-    # unfortunate ssh_config on this machine
-    if clone_url.startswith("git@gitlab.com") and socket.gethostname() == "uno.local":
-        return clone_url.replace("git@gitlab.com", "git@gitlab-sbc")
+def redact_http_url(url: str) -> str:
+    return re.sub(r"(?<=://)[^/]*@", "", url)
+
+
+def gitlab_ts_to_datetime(ts: None | str) -> None | datetime:
+    """
+    gitlab api returns timestamp is string format in UTC
+    convert it to timezone aware datetime object
+    """
+    if ts is None:
+        return None
     else:
-        return clone_url
+        return datetime.strptime(ts, "%Y-%m-%dT%H:%M:%S.%fz").replace(tzinfo=timezone.utc)
+
+
+def clone_url2mirror_path(clone_url: str, dest_path: str) -> tuple[str, str]:
+    """
+    convert clone url to a path to be used for local mirror
+    """
+    if clone_url.startswith("http"):
+        # returns the namespace/project/repo in https://user:pass@somethig.com/namespace/project/repo
+        path = "/".join(clone_url.split("/")[3:])
+    elif clone_url.startswith("git@"):
+        # returns the namespace/project/repo in git@somethig.com:namespace/project/repo
+        path = clone_url.split(":")[1]
+    else:
+        raise ValueError(f"invalid clone url {clone_url}")
+
+    parent_path = os.path.abspath(os.path.expanduser(dest_path)) + "/" + os.path.dirname(path)
+    repo_dir = os.path.basename(path)
+
+    return parent_path, repo_dir

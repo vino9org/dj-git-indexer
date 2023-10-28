@@ -3,13 +3,15 @@ import os
 import pytest
 
 from indexer.utils import (
-    clone_to_browse_url,
+    clone_url2mirror_path,
     display_url,
     enumerate_github_repos,
     enumerate_gitlab_repos,
     enumerate_local_repos,
+    gitlab_ts_to_datetime,
     match_any,
     normalize_branches,
+    redact_http_url,
     should_exclude_from_stats,
     upload_file,
 )
@@ -87,29 +89,23 @@ def test_match_any():
     assert not match_any("/Users/lee/tmp/shared/bbx/cookiecutter-springboot3.git", "*/bbx/bbx*")
 
 
-def test_clone_to_browse_url():
-    assert clone_to_browse_url("https://gitlab.com/someuser/some_repo.git") == "https://gitlab.com/someuser/some_repo"
-    assert (
-        clone_to_browse_url("git@github.com:sloppycoder/k3s-fluxcd-vinolab.git")
-        == "https://github.com/sloppycoder/k3s-fluxcd-vinolab"
-    )
-    assert clone_to_browse_url("file://base_dir/def/my.git") == ""
-
-
 def test_enumerate_local_repos(local_repo):
     repos = list(enumerate_local_repos(local_repo))
     assert len(repos) > 0
+    assert list(repos)[0][1] is None
 
 
 @pytest.mark.skipif(os.environ.get("GITLAB_TOKEN") is None, reason="gitlab token not available")
-def test_enumerate_gitlab_repos(gitlab_test_repo):
-    repos = list(enumerate_gitlab_repos(gitlab_test_repo))
+def test_enumerate_gitlab_repos():
+    repos = list(enumerate_gitlab_repos("hello-api"))
     assert len(repos) > 0
+    assert list(repos)[0][1].visibility is not None
 
 
 def test_enumerate_github_repos(github_test_repo):
     repos = list(enumerate_github_repos(github_test_repo))
     assert len(repos) > 0
+    assert list(repos)[0][1].private is not None
 
 
 def test_display_url():
@@ -145,3 +141,38 @@ def test_normalize_branches():
             "some_random_long_branch_name",
         ]
     )
+
+
+def test_redact_http_url():
+    base_url = "https://gitlab.com/some_namespace/some_project.git"
+    assert redact_http_url(base_url) == base_url
+
+    gitlab_url = base_url.replace("://", "://oauth2:1234567890@")
+    assert redact_http_url(gitlab_url) == base_url
+
+    github_url = base_url.replace("://", "://ghpat_blah1234567890:@")
+    assert redact_http_url(github_url) == base_url
+
+
+def test_gitlab_ts_to_datetime():
+    assert gitlab_ts_to_datetime(None) is None
+    dt = gitlab_ts_to_datetime("2021-08-31T09:00:00.000Z")
+    assert (dt.year, dt.month, dt.second) == (2021, 8, 0)
+    assert dt.tzinfo.tzname(dt) == "UTC"
+
+
+def test_clone_url2mirror_path():
+    assert ("/parent_dir/company/project", "repo.git") == clone_url2mirror_path(
+        "https://user:pass@gitlab.com/company/project/repo.git", "/parent_dir"
+    )
+
+    assert ("/parent_dir/project", "repo.git") == clone_url2mirror_path(
+        "https://github.com/project/repo.git", "/parent_dir"
+    )
+
+    assert ("/parent_dir/company/project", "repo.git") == clone_url2mirror_path(
+        "git@server.net:company/project/repo.git", "/parent_dir"
+    )
+
+    with pytest.raises(ValueError):
+        clone_url2mirror_path("ssl://whatever.company/project/repo.git", "/parent_dir")

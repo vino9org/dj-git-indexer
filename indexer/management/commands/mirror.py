@@ -6,7 +6,12 @@ from functools import partial
 
 from django.core.management.base import BaseCommand
 
-from indexer.utils import enumerate_github_repos, enumerate_gitlab_repos, match_any
+from indexer.utils import (
+    clone_url2mirror_path,
+    enumerate_github_repos,
+    enumerate_gitlab_repos,
+    match_any,
+)
 
 
 def run(command: str, dry_run: bool) -> int:
@@ -28,9 +33,7 @@ def mirror_repo(clone_url: str, dest_path: str, dry_run: bool = False, overwrite
     """
     create a local mirror (as a bare repo) of a remote repo
     """
-    path = clone_url.split(":")[1]
-    parent_dir = os.path.abspath(os.path.expanduser(dest_path)) + "/" + os.path.dirname(path)
-    repo_dir = os.path.basename(path)
+    parent_dir, repo_dir = clone_url2mirror_path(clone_url, dest_path)
 
     cwd = os.getcwd()
     try:
@@ -44,7 +47,7 @@ def mirror_repo(clone_url: str, dest_path: str, dry_run: bool = False, overwrite
                     if overwrite:
                         run(f"rm -rf {repo_dir}", dry_run)
                     else:
-                        print(f"*** {path}.git exists, skipping...")
+                        print(f"*** {repo_dir}.git exists, skipping...")
                         return False
         else:
             run(f"mkdir -p {parent_dir}", dry_run)
@@ -112,7 +115,7 @@ class Command(BaseCommand):
             print("don't nkow how to mirror local repos")
             return None
 
-        for repo_url in enumerator(options["query"]):
+        for repo_url, _ in enumerator(options["query"]):
             if match_any(repo_url, options["filter"]):
                 print(f"Mirroring {repo_url} to {output}")
                 mirror_repo(repo_url, output, options["dry_run"], options["overwrite"])

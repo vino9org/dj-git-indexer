@@ -185,11 +185,6 @@
     "type": "STRING"
   },
   {
-    "mode": "NULLABLE",
-    "name": "browse_url",
-    "type": "STRING"
-  },
-  {
     "mode": "REQUIRED",
     "name": "repo_id",
     "type": "INTEGER"

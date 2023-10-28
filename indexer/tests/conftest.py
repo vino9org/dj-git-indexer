@@ -3,14 +3,15 @@ import shutil
 import sys
 import tempfile
 import zipfile
-from datetime import datetime
+from datetime import datetime, timezone
 
 import pytest
 from django.conf import settings
 from django.core.management import call_command
-from dotenv import find_dotenv, load_dotenv
+from github import Auth, Github
+from gitlab import Gitlab
 
-load_dotenv(find_dotenv(".env.test"))
+from indexer.models import MergeRequest
 
 sys.path.insert(0, os.path.abspath(settings.BASE_DIR))
 
@@ -29,8 +30,26 @@ def django_db_setup(django_db_setup, django_db_blocker):
 
 
 @pytest.fixture(scope="session")
+def gitlab():
+    private_token = os.environ.get("GITLAB_TOKEN")
+    if private_token:
+        yield Gitlab("https://gitlab.com", private_token=private_token, per_page=100)
+    else:
+        yield None
+
+
+@pytest.fixture(scope="session")
+def github():
+    access_token = os.environ.get("GITHUB_TOKEN")
+    if access_token:
+        yield Github(auth=Auth.Token(access_token))
+    else:
+        yield Github()
+
+
+@pytest.fixture(scope="session")
 def gitlab_test_repo():
-    return "test-project-1.git"
+    return "vino9/test-project-1"
 
 
 @pytest.fixture(scope="session")
@@ -55,12 +74,12 @@ def seed_data():
 
     me, _ = Author.objects.get_or_create(name="me", email="mini@me", real_name="me", real_email="mini@me")
 
-    now = datetime.now().isoformat(timespec="seconds")
+    now = datetime.now().replace(tzinfo=timezone.utc)
     commit1, _ = Commit.objects.get_or_create(sha="feb3a2837630c0e51447fc1d7e68d86f964a8440", author=me, created_at=now)
     commit2, _ = Commit.objects.get_or_create(sha="ee474544052762d314756bb7439d6dab73221d3d", author=me, created_at=now)
     commit3, _ = Commit.objects.get_or_create(sha="e2c8b79813b95c93e5b06c5a82e4c417d5020762", author=me, created_at=now)
 
-    repo1, _ = Repository.objects.get_or_create(clone_url="git@github.com:super/repo.git", repo_type="github")
+    repo1, _ = Repository.objects.get_or_create(clone_url="https://github.com/super/repo.git", repo_type="github")
     repo2, _ = Repository.objects.get_or_create(clone_url="https://gitlab.com/dummy/repo.git", repo_type="gitlab")
 
     repo1.commits.set([commit1, commit2])
@@ -82,4 +101,20 @@ def seed_data():
     )
     CommittedFile.objects.get_or_create(
         file_path="app/App.js", file_name="App.js", change_type="UPDATE", commit=commit1
+    )
+
+    MergeRequest.objects.create(
+        request_id="MR1",
+        title="Merge Request 1",
+        source_branch="feature/feature-1",
+        target_branch="develop",
+        repo=repo1,
+    )
+
+    MergeRequest.objects.create(
+        request_id="MR2",
+        title="Merge Request 2",
+        source_branch="feature/feature-2",
+        target_branch="develop",
+        repo=repo1,
     )
