@@ -8,9 +8,11 @@ from django.core.management.base import BaseCommand
 
 from indexer.utils import (
     clone_url2mirror_path,
+    display_url,
     enumerate_github_repos,
     enumerate_gitlab_repos,
     match_any,
+    redact_http_url,
 )
 
 
@@ -34,6 +36,7 @@ def mirror_repo(clone_url: str, dest_path: str, dry_run: bool = False, overwrite
     create a local mirror (as a bare repo) of a remote repo
     """
     parent_dir, repo_dir = clone_url2mirror_path(clone_url, dest_path)
+    log_url = display_url(redact_http_url(clone_url))
 
     cwd = os.getcwd()
     try:
@@ -54,7 +57,7 @@ def mirror_repo(clone_url: str, dest_path: str, dry_run: bool = False, overwrite
 
         if not dry_run:
             os.chdir(parent_dir)
-        return run(f"git clone --mirror {clone_url}", dry_run)
+        return run(f"git clone --mirror {log_url}", dry_run)
 
     finally:
         os.chdir(cwd)
