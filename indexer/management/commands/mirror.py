@@ -37,6 +37,7 @@ def mirror_repo(clone_url: str, dest_path: str, dry_run: bool = False, overwrite
     """
     parent_dir, repo_dir = clone_url2mirror_path(clone_url, dest_path)
     log_url = display_url(redact_http_url(clone_url))
+    print(f"Mirroring {log_url} to {parent_dir}")
 
     cwd = os.getcwd()
     try:
@@ -57,7 +58,7 @@ def mirror_repo(clone_url: str, dest_path: str, dry_run: bool = False, overwrite
 
         if not dry_run:
             os.chdir(parent_dir)
-        return run(f"git clone --mirror {log_url}", dry_run)
+        return run(f"git clone --mirror {clone_url}", dry_run)
 
     finally:
         os.chdir(cwd)
@@ -120,5 +121,4 @@ class Command(BaseCommand):
 
         for repo_url, _ in enumerator(options["query"]):
             if match_any(repo_url, options["filter"]):
-                print(f"Mirroring {repo_url} to {output}")
                 mirror_repo(repo_url, output, options["dry_run"], options["overwrite"])
